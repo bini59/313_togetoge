@@ -107,7 +107,7 @@ export function Timeline({ events }: Props) {
   }, [activeEvent?.id])
 
   useEffect(() => {
-    if (!activeEvent) return
+    if (!activeEvent || !cinemaMode) return
     if (typeof window === 'undefined') return
     try {
       let ctx = audioCtxRef.current
@@ -134,7 +134,7 @@ export function Timeline({ events }: Props) {
     } catch {
       // autoplay policy may block until first gesture; ignore
     }
-  }, [activeEvent?.id])
+  }, [activeEvent?.id, cinemaMode])
 
   function advanceToNext(currentId: string) {
     const idx = events.findIndex((e) => e.id === currentId)
@@ -198,24 +198,28 @@ export function Timeline({ events }: Props) {
       />
       {cinemaMode && activeEvent && (
         <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 scale-110 blur-md opacity-40">
+          <div className="absolute inset-0 scale-110 blur-md opacity-30">
             <Player events={events} />
           </div>
-          <div className="absolute inset-0 bg-black/45" />
+          <div className="absolute inset-0 bg-black/55" />
         </div>
       )}
-      <div className="cinema-vignette" />
-      <div className="cinema-grain" />
-      <div
-        className="cinema-letterbox top-0"
-        style={{ ['--lb-origin' as string]: 'top' }}
-        data-on={focusMode ? '1' : '0'}
-      />
-      <div
-        className="cinema-letterbox bottom-0"
-        style={{ ['--lb-origin' as string]: 'bottom' }}
-        data-on={focusMode ? '1' : '0'}
-      />
+      {cinemaMode && <div className="cinema-vignette" />}
+      {cinemaMode && <div className="cinema-grain" />}
+      {cinemaMode && (
+        <>
+          <div
+            className="cinema-letterbox top-0"
+            style={{ ['--lb-origin' as string]: 'top' }}
+            data-on={focusMode ? '1' : '0'}
+          />
+          <div
+            className="cinema-letterbox bottom-0"
+            style={{ ['--lb-origin' as string]: 'bottom' }}
+            data-on={focusMode ? '1' : '0'}
+          />
+        </>
+      )}
       {yearSlate && (
         <div key={yearSlate} className="year-slate">
           {yearSlate}
