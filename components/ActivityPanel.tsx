@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { TimelineEvent } from '@/lib/types'
 import { TYPE_COLOR, TYPE_LABEL } from '@/lib/eventLabels'
 import { usePlayback } from '@/lib/store'
@@ -42,6 +42,7 @@ export function ActivityPanel({ events }: Props) {
   useEffect(() => {
     let alive = true
     function load() {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
       fetch('/api/activity')
         .then((r) => r.json())
         .then((j) => {
@@ -49,17 +50,18 @@ export function ActivityPanel({ events }: Props) {
           setRecent(j.recentComments ?? [])
           setTop(j.topParticipated ?? [])
         })
-        .catch(() => {})
+        .catch((err) => console.warn('activity load failed', err))
     }
     load()
+    if (!open) return () => { alive = false }
     const id = setInterval(load, 20_000)
     return () => {
       alive = false
       clearInterval(id)
     }
-  }, [])
+  }, [open])
 
-  const eventById = new Map(events.map((e) => [e.id, e]))
+  const eventById = useMemo(() => new Map(events.map((e) => [e.id, e])), [events])
   const totalComments = recent.length
   const totalParticipations = top.reduce((s, r) => s + r.count, 0)
 

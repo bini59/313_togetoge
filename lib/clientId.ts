@@ -12,6 +12,7 @@ export async function getOrCreateClientId(): Promise<string> {
   store.set(COOKIE_NAME, id, {
     httpOnly: true,
     sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: ONE_YEAR,
   })

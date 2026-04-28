@@ -49,3 +49,12 @@ create policy comments_read on comments
 -- Grants: anon reads counts + comments; service_role does everything via API routes.
 grant select on participations, comments to anon;
 grant all on participations, participation_clients, comments to service_role;
+
+-- Aggregated view: derives per-event counts from participation_clients atomically.
+-- Eliminates the read-modify-write race in the participate API.
+create or replace view participation_counts as
+  select event_id, count(*)::int as count
+  from participation_clients
+  group by event_id;
+
+grant select on participation_counts to anon, authenticated, service_role;

@@ -5,6 +5,14 @@ import { events } from '@/data/timeline'
 
 const validEventIds = new Set(events.map((e) => e.id))
 
+async function countFor(sb: ReturnType<typeof getServerClient>, eventId: string): Promise<number> {
+  const { count } = await sb
+    .from('participation_clients')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+  return count ?? 0
+}
+
 export async function POST(req: Request) {
   const { eventId } = (await req.json().catch(() => ({}))) as { eventId?: string }
   if (!eventId || !validEventIds.has(eventId)) {
@@ -20,28 +28,14 @@ export async function POST(req: Request) {
 
   if (insertErr) {
     if (insertErr.code === '23505') {
-      const { data } = await sb.from('participations').select('count').eq('event_id', eventId).single()
-      return NextResponse.json({ count: data?.count ?? 0, alreadyParticipated: true })
+      const count = await countFor(sb, eventId)
+      return NextResponse.json({ count, alreadyParticipated: true })
     }
     return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
 
-  const { data: existing } = await sb
-    .from('participations')
-    .select('count')
-    .eq('event_id', eventId)
-    .maybeSingle()
-
-  const newCount = (existing?.count ?? 0) + 1
-  const { error: upsertErr } = await sb
-    .from('participations')
-    .upsert({ event_id: eventId, count: newCount })
-
-  if (upsertErr) {
-    return NextResponse.json({ error: upsertErr.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ count: newCount, alreadyParticipated: false })
+  const count = await countFor(sb, eventId)
+  return NextResponse.json({ count, alreadyParticipated: false })
 }
 
 export async function GET() {
@@ -49,7 +43,7 @@ export async function GET() {
   const clientId = await getOrCreateClientId()
 
   const [countsRes, mineRes] = await Promise.all([
-    sb.from('participations').select('event_id, count'),
+    sb.from('participation_counts').select('event_id, count'),
     sb.from('participation_clients').select('event_id').eq('client_id', clientId),
   ])
 

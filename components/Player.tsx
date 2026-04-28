@@ -68,7 +68,12 @@ export function Player({ events, onEnded }: Props) {
   }, [youtubeId])
 
   useEffect(() => {
+    const ALLOWED_ORIGINS = new Set([
+      'https://www.youtube.com',
+      'https://www.youtube-nocookie.com',
+    ])
     function onMessage(e: MessageEvent) {
+      if (!ALLOWED_ORIGINS.has(e.origin)) return
       if (typeof e.data !== 'string') return
       try {
         const msg = JSON.parse(e.data)
@@ -96,20 +101,23 @@ export function Player({ events, onEnded }: Props) {
     )
   }
 
-  const params = new URLSearchParams({
-    enablejsapi: '1',
-    autoplay: isPlaying ? '1' : '0',
-    rel: '0',
-    modestbranding: '1',
-  })
-  if (startSec > 0) params.set('start', String(startSec))
+  const src = useMemo(() => {
+    const params = new URLSearchParams({
+      enablejsapi: '1',
+      autoplay: isPlaying ? '1' : '0',
+      rel: '0',
+      modestbranding: '1',
+    })
+    if (startSec > 0) params.set('start', String(startSec))
+    return `https://www.youtube.com/embed/${youtubeId}?${params.toString()}`
+  }, [youtubeId, isPlaying, startSec])
 
   return (
     <iframe
       ref={iframeRef}
-      key={`${youtubeId}-${startSec}`}
+      key={youtubeId}
       className="aspect-video w-full"
-      src={`https://www.youtube.com/embed/${youtubeId}?${params.toString()}`}
+      src={src}
       title="GBC playback"
       allow="autoplay; encrypted-media; picture-in-picture"
       allowFullScreen

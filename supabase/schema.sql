@@ -50,3 +50,12 @@ create policy comments_read on comments
 
 -- No insert/update/delete policies for anon ⇒ default deny.
 -- participation_clients is internal; no anon access.
+
+-- Aggregated view: derives per-event counts from participation_clients atomically.
+-- Eliminates the read-modify-write race in the participate API.
+create or replace view participation_counts as
+  select event_id, count(*)::int as count
+  from participation_clients
+  group by event_id;
+
+grant select on participation_counts to anon, authenticated, service_role;

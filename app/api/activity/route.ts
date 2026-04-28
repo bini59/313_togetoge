@@ -14,7 +14,7 @@ export async function GET() {
       .order('created_at', { ascending: false })
       .limit(20),
     sb
-      .from('participations')
+      .from('participation_counts')
       .select('event_id, count')
       .order('count', { ascending: false })
       .limit(10),

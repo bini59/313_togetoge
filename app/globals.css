@@ -8,6 +8,17 @@
   --border-strong: rgba(255, 255, 255, 0.32);
   --border-weak: rgba(255, 255, 255, 0.18);
   --font-serif-kr: 'Noto Serif KR', ui-serif, Georgia, serif;
+
+  /* Layered z-index tokens (low → high) */
+  --z-backdrop: 0;
+  --z-cinema-bg: 1;
+  --z-strip: 2;
+  --z-hero: 10;
+  --z-vignette: 30;
+  --z-grain: 31;
+  --z-letterbox: 40;
+  --z-chrome: 45;
+  --z-slate: 50;
 }
 
 html, body {
@@ -45,11 +56,6 @@ html, body {
   100% { opacity: 0; transform: scale(0.98); }
 }
 
-@keyframes letterboxIn {
-  from { transform: scaleY(0); }
-  to   { transform: scaleY(1); }
-}
-
 @keyframes lensPulse {
   0%, 100% { opacity: 0.85; transform: translateX(-50%) scale(1); }
   50%      { opacity: 1;    transform: translateX(-50%) scale(1.18); }
@@ -58,10 +64,15 @@ html, body {
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+.anim-dissolve  { animation: dissolveIn 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.anim-subtitle  { animation: subtitleIn 700ms ease-out 200ms both; }
+.anim-subtitle-late { animation: subtitleIn 800ms ease-out 350ms both; }
+.anim-lens-pulse { animation: lensPulse 2.4s ease-in-out infinite; }
+
 .cinema-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: var(--z-backdrop);
   pointer-events: none;
   background: var(--color-bg);
 }
@@ -79,10 +90,37 @@ html, body {
   background: radial-gradient(circle at 75% 80%, rgba(var(--scene-tint, 255, 59, 107), 0.12) 0%, transparent 60%);
 }
 
+.cinema-bg-video {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cinema-bg);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* iframe fills viewport using 16:9 aspect cover trick (no blur, no scaling). */
+.cinema-bg-video > iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 177.78vh;
+  height: 100vh;
+  min-width: 100vw;
+  min-height: 56.25vw;
+  transform: translate(-50%, -50%);
+}
+
+.cinema-bg-video::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.85) 100%);
+}
+
 .cinema-vignette {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: var(--z-vignette);
   pointer-events: none;
   background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
 }
@@ -90,7 +128,7 @@ html, body {
 .cinema-grain {
   position: fixed;
   inset: 0;
-  z-index: 31;
+  z-index: var(--z-grain);
   pointer-events: none;
   opacity: 0.04;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
@@ -102,7 +140,7 @@ html, body {
   left: 0;
   right: 0;
   height: 5.5vh;
-  z-index: 40;
+  z-index: var(--z-letterbox);
   pointer-events: none;
   background: #000;
   transform-origin: var(--lb-origin, top);
@@ -115,7 +153,7 @@ html, body {
 .year-slate {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-slate);
   pointer-events: none;
   display: grid;
   place-items: center;
@@ -126,4 +164,16 @@ html, body {
   color: rgba(255, 255, 255, 0.92);
   text-shadow: 0 8px 60px rgba(0, 0, 0, 0.7);
   animation: yearSlate 1700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .cinema-grain { display: none; }
+  .anim-lens-pulse { animation: none; }
+  .cinema-backdrop::before,
+  .cinema-backdrop::after { transition: none; }
 }
