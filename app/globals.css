@@ -7,7 +7,7 @@
   --color-muted: #6b7280;
   --border-strong: rgba(255, 255, 255, 0.32);
   --border-weak: rgba(255, 255, 255, 0.18);
-  --font-serif-kr: 'Noto Serif KR', ui-serif, Georgia, serif;
+  --font-serif-kr: ui-serif, 'Apple SD Gothic Neo', 'Nanum Myeongjo', 'Batang', Georgia, serif;
 
   /* Layered z-index tokens (low → high) */
   --z-backdrop: 0;

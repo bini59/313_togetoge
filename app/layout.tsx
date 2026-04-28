@@ -1,14 +1,5 @@
 import type { Metadata } from 'next'
-import { Noto_Serif_KR } from 'next/font/google'
 import './globals.css'
-
-const notoSerifKR = Noto_Serif_KR({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  display: 'swap',
-  variable: '--font-serif-kr',
-  preload: true,
-})
 
 export const metadata: Metadata = {
   title: 'GBC Timeline',
@@ -17,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={notoSerifKR.variable}>
+    <html lang="ko">
       <body>{children}</body>
     </html>
   )
