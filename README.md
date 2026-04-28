@@ -67,7 +67,8 @@ SUPABASE_SERVICE_ROLE_KEY=...   # API 라우트에서만 사용
 pnpm install
 pnpm dev          # http://localhost:3000
 pnpm build
-pnpm test         # vitest
+pnpm test         # vitest (단위/컴포넌트)
+pnpm test:e2e     # Playwright E2E (자동으로 dev 서버 기동)
 pnpm lint
 pnpm typecheck    # tsc --noEmit
 ```
