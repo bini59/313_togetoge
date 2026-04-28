@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PARTICIPATE_LABEL } from '@/lib/eventLabels'
 import type { EventType } from '@/lib/types'
 
@@ -14,6 +14,17 @@ export function ParticipateButton({ eventId, eventType, initialCount, initialDon
   const [count, setCount] = useState(initialCount)
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(initialDone ?? false)
+  // Once the user has clicked locally, our state is authoritative — stop pulling
+  // from props (otherwise late-arriving parent data would overwrite the click).
+  const [userClaimed, setUserClaimed] = useState(false)
+
+  useEffect(() => {
+    if (!userClaimed) setCount(initialCount)
+  }, [initialCount, userClaimed])
+
+  useEffect(() => {
+    if (!userClaimed && initialDone) setDone(true)
+  }, [initialDone, userClaimed])
 
   async function click() {
     if (pending || done) return
@@ -27,6 +38,7 @@ export function ParticipateButton({ eventId, eventType, initialCount, initialDon
       const json = await res.json()
       if (typeof json.count === 'number') setCount(json.count)
       setDone(true)
+      setUserClaimed(true)
     } finally {
       setPending(false)
     }
