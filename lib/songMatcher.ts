@@ -19,6 +19,7 @@ export function resolveYoutubeId(event: TimelineEvent, sessionSeed = ''): string
   switch (event.type) {
     case 'live':
     case 'fes': {
+      if (event.liveYoutubeId) return event.liveYoutubeId
       const list = setlistById.get(event.setlistId)
       if (!list) return null
       const songId = pickRandom(list.songIds, event.id + sessionSeed)

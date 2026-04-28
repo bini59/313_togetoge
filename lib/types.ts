@@ -38,6 +38,7 @@ export interface DirectVideoEvent extends BaseEvent {
 export interface SetlistEvent extends BaseEvent {
   type: 'live' | 'fes'
   setlistId: string
+  liveYoutubeId?: string
 }
 
 export interface AlbumEvent extends BaseEvent {
