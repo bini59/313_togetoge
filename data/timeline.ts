@@ -148,7 +148,7 @@ const rawEvents: TimelineEvent[] = [
     type: 'radio',
     title: '「ガールズバンドクライ ～ラジオにも全部ぶちこめ。～」 시작',
     description: '온센(音泉) (~2025/3/27 종료).',
-    youtubeId: 'hUL_T8Qrvqs',
+    youtubeId: '2abeNNJtGq4',
   },
   {
     id: 'radio-2024-04-12',
@@ -156,7 +156,7 @@ const rawEvents: TimelineEvent[] = [
     type: 'radio',
     title: '「トゲラジ+」 방송 시작',
     description: '카와사키 FM (~6/19 종료).',
-    youtubeId: 'hUL_T8Qrvqs',
+    youtubeId: '42tkLZhBBb8',
   },
   {
     id: 'album-2024-04-24',
