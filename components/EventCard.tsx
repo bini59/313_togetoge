@@ -9,9 +9,10 @@ import { Comments } from './Comments'
 interface Props {
   event: TimelineEvent
   participationCount: number
+  alreadyParticipated?: boolean
 }
 
-export function EventCard({ event, participationCount }: Props) {
+export function EventCard({ event, participationCount, alreadyParticipated }: Props) {
   const ref = useRef<HTMLElement | null>(null)
   const { currentEventId, setCurrent, play } = usePlayback()
   const isActive = currentEventId === event.id
@@ -61,6 +62,7 @@ export function EventCard({ event, participationCount }: Props) {
           eventId={event.id}
           eventType={event.type}
           initialCount={participationCount}
+          initialDone={alreadyParticipated ?? false}
         />
       </div>
 

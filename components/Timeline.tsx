@@ -19,6 +19,7 @@ export function Timeline({ events }: Props) {
     isPlaying,
   } = usePlayback()
   const [counts, setCounts] = useState<Record<string, number>>({})
+  const [participated, setParticipated] = useState<Set<string>>(new Set())
   const listRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export function Timeline({ events }: Props) {
       .then((r) => r.json())
       .then((j) => {
         setCounts(j.counts ?? {})
+        setParticipated(new Set<string>(j.participated ?? []))
       })
       .catch(() => {})
   }, [])
@@ -106,6 +108,7 @@ export function Timeline({ events }: Props) {
               key={event.id}
               event={event}
               participationCount={counts[event.id] ?? 0}
+              alreadyParticipated={participated.has(event.id)}
             />
           ))}
         </div>

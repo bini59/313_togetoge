@@ -7,12 +7,13 @@ interface Props {
   eventId: string
   eventType: EventType
   initialCount: number
+  initialDone?: boolean
 }
 
-export function ParticipateButton({ eventId, eventType, initialCount }: Props) {
+export function ParticipateButton({ eventId, eventType, initialCount, initialDone }: Props) {
   const [count, setCount] = useState(initialCount)
   const [pending, setPending] = useState(false)
-  const [done, setDone] = useState(false)
+  const [done, setDone] = useState(initialDone ?? false)
 
   async function click() {
     if (pending || done) return

@@ -46,9 +46,21 @@ export async function POST(req: Request) {
 
 export async function GET() {
   const sb = getServerClient()
-  const { data, error } = await sb.from('participations').select('event_id, count')
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  const map: Record<string, number> = {}
-  for (const row of data ?? []) map[row.event_id] = row.count
-  return NextResponse.json({ counts: map })
+  const clientId = await getOrCreateClientId()
+
+  const [countsRes, mineRes] = await Promise.all([
+    sb.from('participations').select('event_id, count'),
+    sb.from('participation_clients').select('event_id').eq('client_id', clientId),
+  ])
+
+  if (countsRes.error) {
+    return NextResponse.json({ error: countsRes.error.message }, { status: 500 })
+  }
+
+  const counts: Record<string, number> = {}
+  for (const row of countsRes.data ?? []) counts[row.event_id] = row.count
+
+  const participated: string[] = (mineRes.data ?? []).map((r) => r.event_id)
+
+  return NextResponse.json({ counts, participated })
 }
