@@ -6,8 +6,8 @@ import { resolveYoutubeId } from '@/lib/songMatcher'
 import { usePlayback } from '@/lib/store'
 import { Player } from './Player'
 import { ParticipateButton } from './ParticipateButton'
-import { Comments } from './Comments'
 import { ActivityPanel } from './ActivityPanel'
+import { CommentsScattered } from './CommentsScattered'
 
 interface Props {
   events: TimelineEvent[]
@@ -34,8 +34,6 @@ export function Timeline({ events }: Props) {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem('gbc_player_open') === '1'
   })
-  const [detailOpen, setDetailOpen] = useState(false)
-
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem('gbc_player_open', playerOpen ? '1' : '0')
@@ -137,11 +135,11 @@ export function Timeline({ events }: Props) {
     return from.center + (isPlaying ? progress * (to.center - from.center) : 0)
   })()
 
-  const focusMode = isPlaying && !!activeEvent
+  const focusMode = !!activeEvent
 
   return (
     <div className="relative h-full w-full">
-      {focusMode && activeEvent && !detailOpen && (
+      {focusMode && activeEvent && (
         <div className="absolute left-0 right-0 top-0 h-[68%] z-10 flex items-center justify-center px-8 sm:px-16 pointer-events-none animate-[fadeIn_400ms_ease-out]">
           <div className="max-w-3xl w-full">
             <div className="flex items-center gap-3 text-xs">
@@ -162,6 +160,14 @@ export function Timeline({ events }: Props) {
                 {activeEvent.description}
               </p>
             )}
+            <div className="mt-5 pointer-events-auto">
+              <ParticipateButton
+                eventId={activeEvent.id}
+                eventType={activeEvent.type}
+                initialCount={counts[activeEvent.id] ?? 0}
+                initialDone={participated.has(activeEvent.id)}
+              />
+            </div>
             <div className="mt-6 flex items-center gap-3 text-[11px] text-[var(--color-muted)]">
               <span>{activeIndex + 1}</span>
               <span className="flex-1 h-px bg-white/15" />
@@ -169,6 +175,10 @@ export function Timeline({ events }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {focusMode && activeEvent && (
+        <CommentsScattered key={activeEvent.id} eventId={activeEvent.id} />
       )}
 
       <div
@@ -328,21 +338,12 @@ export function Timeline({ events }: Props) {
                 setCurrent(null)
                 pause()
                 setPlayerOpen(false)
-                setDetailOpen(false)
               }}
               className="px-3 py-1.5 text-xs rounded-full bg-white/5 hover:bg-white/10 text-[var(--color-muted)] backdrop-blur"
             >
               초기화
             </button>
           </>
-        )}
-        {activeEvent && (
-          <button
-            onClick={() => setDetailOpen((v) => !v)}
-            className="px-3 py-1.5 text-xs rounded-full bg-white/5 hover:bg-white/10 backdrop-blur"
-          >
-            {detailOpen ? '상세 닫기' : '상세 보기'}
-          </button>
         )}
         {activeEvent && (
           <button
@@ -366,36 +367,6 @@ export function Timeline({ events }: Props) {
       )}
 
       <ActivityPanel events={events} />
-
-      {activeEvent && detailOpen && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 w-[320px] max-h-[70vh] overflow-y-auto rounded-lg border border-white/10 bg-black/85 backdrop-blur p-4">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <time className="font-mono text-[var(--color-muted)]">
-              {activeEvent.date}
-            </time>
-            <span
-              className={`px-2 py-0.5 rounded border text-[10px] uppercase tracking-wider ${TYPE_COLOR[activeEvent.type]}`}
-            >
-              {TYPE_LABEL[activeEvent.type]}
-            </span>
-          </div>
-          <h2 className="mt-1 text-base font-semibold">{activeEvent.title}</h2>
-          {activeEvent.description && (
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              {activeEvent.description}
-            </p>
-          )}
-          <div className="mt-3">
-            <ParticipateButton
-              eventId={activeEvent.id}
-              eventType={activeEvent.type}
-              initialCount={counts[activeEvent.id] ?? 0}
-              initialDone={participated.has(activeEvent.id)}
-            />
-          </div>
-          <Comments eventId={activeEvent.id} />
-        </div>
-      )}
     </div>
   )
 }
