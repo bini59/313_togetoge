@@ -27,11 +27,11 @@ describe('resolveYoutubeId', () => {
 
   it('is deterministic per (eventId, sessionSeed) for live events', () => {
     const ev: TimelineEvent = {
-      id: 'live-2024-08-25-kinema',
-      date: '2024-08-25',
+      id: 'live-2024-03-16-1st',
+      date: '2024-03-16',
       type: 'live',
-      title: 'kinema',
-      setlistId: 'live-2024-08-25-kinema',
+      title: '1st ONE-MAN LIVE',
+      setlistId: 'sl-1st-oneman',
     }
     const a = resolveYoutubeId(ev, 'seed-1')
     const b = resolveYoutubeId(ev, 'seed-1')
