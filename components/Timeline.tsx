@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { TimelineEvent } from '@/lib/types'
 import { usePlayback } from '@/lib/store'
 import { EventCard } from './EventCard'
@@ -10,15 +10,48 @@ interface Props {
 }
 
 export function Timeline({ events }: Props) {
-  const { currentEventId, setCurrent, play, pause, isPlaying } = usePlayback()
+  const {
+    currentEventId,
+    setCurrent,
+    setCurrentFromScroll,
+    play,
+    pause,
+    isPlaying,
+  } = usePlayback()
   const [counts, setCounts] = useState<Record<string, number>>({})
+  const listRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     fetch('/api/participate')
       .then((r) => r.json())
-      .then((j) => setCounts(j.counts ?? {}))
+      .then((j) => {
+        setCounts(j.counts ?? {})
+      })
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const root = listRef.current
+    if (!root) return
+    const cards = root.querySelectorAll<HTMLElement>('[data-event-id]')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let best: { id: string; ratio: number } | null = null
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          const id = entry.target.getAttribute('data-event-id')
+          if (!id) continue
+          if (!best || entry.intersectionRatio > best.ratio) {
+            best = { id, ratio: entry.intersectionRatio }
+          }
+        }
+        if (best) setCurrentFromScroll(best.id)
+      },
+      { rootMargin: '-40% 0px -40% 0px', threshold: [0.1, 0.5, 1] },
+    )
+    cards.forEach((c) => observer.observe(c))
+    return () => observer.disconnect()
+  }, [events, setCurrentFromScroll])
 
   function startFromBeginning() {
     if (events.length === 0) return
@@ -36,9 +69,9 @@ export function Timeline({ events }: Props) {
   }
 
   return (
-    <div className="grid lg:grid-cols-[1fr_minmax(320px,420px)] gap-6 p-6">
-      <section className="relative">
-        <div className="sticky top-0 z-10 -mx-6 px-6 py-3 bg-[var(--color-bg)]/90 backdrop-blur border-b border-white/10 flex gap-2">
+    <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1fr_minmax(320px,420px)]">
+      <section className="relative order-2 lg:order-1">
+        <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[var(--color-bg)]/90 backdrop-blur border-b border-white/10 flex gap-2">
           {currentEventId === null ? (
             <button
               onClick={startFromBeginning}
@@ -56,7 +89,10 @@ export function Timeline({ events }: Props) {
           )}
           {currentEventId && (
             <button
-              onClick={() => { setCurrent(null); pause() }}
+              onClick={() => {
+                setCurrent(null)
+                pause()
+              }}
               className="px-4 py-2 text-sm rounded bg-white/5 hover:bg-white/10 text-[var(--color-muted)]"
             >
               초기화
@@ -64,7 +100,7 @@ export function Timeline({ events }: Props) {
           )}
         </div>
 
-        <div className="mt-4">
+        <div ref={listRef} className="mt-4">
           {events.map((event) => (
             <EventCard
               key={event.id}
@@ -75,11 +111,11 @@ export function Timeline({ events }: Props) {
         </div>
       </section>
 
-      <aside className="relative">
-        <div className="sticky top-20">
+      <aside className="relative order-1 lg:order-2">
+        <div className="lg:sticky lg:top-20">
           <Player events={events} onEnded={advanceToNext} />
           <p className="mt-2 text-xs text-[var(--color-muted)]">
-            영상이 끝나면 자동으로 다음 이벤트로 진행됩니다.
+            영상이 끝나면 자동으로 다음 이벤트로 진행됩니다. 스크롤만 해도 해당 이벤트의 영상이 재생됩니다.
           </p>
         </div>
       </aside>
