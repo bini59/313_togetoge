@@ -5,6 +5,8 @@
   --color-fg: #ededed;
   --color-accent: #ff3b6b;
   --color-muted: #6b7280;
+  --border-strong: rgba(255, 255, 255, 0.32);
+  --border-weak: rgba(255, 255, 255, 0.18);
 }
 
 html, body {

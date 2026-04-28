@@ -164,7 +164,7 @@ export function Timeline({ events }: Props) {
             </div>
             <div className="mt-6 flex items-center gap-3 text-[11px] text-[var(--color-muted)]">
               <span>{activeIndex + 1}</span>
-              <span className="flex-1 h-px bg-white/15" />
+              <span className="flex-1 h-px bg-white/25" />
               <span>{events.length}</span>
             </div>
           </div>
@@ -189,10 +189,10 @@ export function Timeline({ events }: Props) {
           }}
         >
           <div
-            className="absolute left-0 right-0 top-1/2 h-px bg-white/15"
+            className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-px bg-white/30"
           />
           <div
-            className="absolute left-0 top-1/2 h-px bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]"
+            className="absolute left-0 top-1/2 h-[2px] -translate-y-px bg-[var(--color-accent)] shadow-[0_0_12px_var(--color-accent)]"
             style={{
               width: Math.max(0, playheadX),
               opacity: activeIndex >= 0 ? 1 : 0,
@@ -238,10 +238,10 @@ export function Timeline({ events }: Props) {
                 }}
               >
                 <div
-                  className={`absolute left-1/2 -translate-x-1/2 border-l border-dashed transition-colors ${
+                  className={`absolute left-1/2 -translate-x-1/2 border-l-2 transition-colors ${
                     isActive
-                      ? 'border-[var(--color-accent)]/70'
-                      : 'border-white/20 group-hover:border-white/45'
+                      ? 'border-[var(--color-accent)]/80'
+                      : 'border-white/30 group-hover:border-white/55'
                   }`}
                   style={{
                     top: stemUp ? `calc(50% - ${stemHeight}px)` : '50%',
@@ -260,10 +260,10 @@ export function Timeline({ events }: Props) {
                   <div
                     className={`-translate-x-1/2 rounded-full transition-all ${
                       isActive
-                        ? 'bg-[var(--color-accent)] ring-4 ring-[var(--color-accent)]/25 w-1.5 h-1.5'
+                        ? 'bg-[var(--color-accent)] ring-4 ring-[var(--color-accent)]/30 shadow-[0_0_18px_var(--color-accent)] w-2 h-2'
                         : (counts[event.id] ?? 0) > 0
-                          ? 'bg-[var(--color-accent)]/80 w-2 h-2'
-                          : 'bg-white/55 group-hover:bg-white w-1.5 h-1.5'
+                          ? 'bg-[var(--color-accent)]/85 w-2 h-2'
+                          : 'bg-white/70 group-hover:bg-white w-2 h-2'
                     }`}
                   />
                   <div
@@ -330,7 +330,7 @@ export function Timeline({ events }: Props) {
 
       {activeEvent && (
         <div
-          className={`absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/60 backdrop-blur transition-opacity ${
+          className={`absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-black/60 backdrop-blur transition-opacity ${
             playerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-hidden={!playerOpen}

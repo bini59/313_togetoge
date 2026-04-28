@@ -36,12 +36,12 @@ interface NotePos {
 
 function noteStyle(id: string, idx: number): NotePos {
   const h = hashCode(id)
-  // Two columns of safe zones: 2–28% and 60–94% to keep center hero readable.
+  // Two columns of safe zones: 1–30% and 58–95% to keep center hero readable.
   const leftSide = ((h >> 3) & 1) === 0
-  const xBase = leftSide ? 2 + (h % 26) : 60 + (h % 34)
-  const yBase = 4 + ((h >> 7) % 56)
-  const rotate = ((h >> 13) % 11) - 5
-  const width = 150 + ((h >> 17) % 80)
+  const xBase = leftSide ? 1 + (h % 29) : 58 + (h % 37)
+  const yBase = 3 + ((h >> 7) % 62)
+  const rotate = ((h >> 13) % 13) - 6
+  const width = 140 + ((h >> 17) % 90)
   const color = NOTE_COLORS[h % NOTE_COLORS.length]
   return {
     left: `${xBase}%`,
@@ -49,7 +49,7 @@ function noteStyle(id: string, idx: number): NotePos {
     width,
     rotate,
     color,
-    delay: idx * 70,
+    delay: Math.min(idx, 20) * 50,
   }
 }
 
@@ -98,7 +98,7 @@ export function CommentsScattered({ eventId }: Props) {
 
   return (
     <div className="absolute inset-0 pointer-events-none z-10">
-      {comments.slice(0, 16).map((c, i) => {
+      {comments.slice(0, 50).map((c, i) => {
         const s = noteStyle(c.id, i)
         return (
           <div

@@ -27,13 +27,17 @@ export function EventCard({ event, participationCount, alreadyParticipated }: Pr
     <article
       ref={ref}
       data-event-id={event.id}
-      className={`relative pl-6 sm:pl-8 pr-2 sm:pr-4 py-5 sm:py-6 border-l-2 transition-colors ${
-        isActive ? 'border-[var(--color-accent)] bg-white/5' : 'border-white/10'
+      className={`relative pl-6 sm:pl-8 pr-2 sm:pr-4 py-5 sm:py-6 border-l-[3px] transition-colors ${
+        isActive
+          ? 'border-[var(--color-accent)] bg-white/5 shadow-[inset_2px_0_0_var(--color-accent)]'
+          : 'border-white/25'
       }`}
     >
       <span
         className={`absolute -left-2 top-7 w-3 h-3 rounded-full ${
-          isActive ? 'bg-[var(--color-accent)]' : 'bg-white/30'
+          isActive
+            ? 'bg-[var(--color-accent)] shadow-[0_0_14px_var(--color-accent)]'
+            : 'bg-white/45'
         }`}
       />
       <div className="flex flex-wrap items-center gap-2 text-xs">

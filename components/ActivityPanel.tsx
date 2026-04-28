@@ -81,7 +81,7 @@ export function ActivityPanel({ events }: Props) {
       </button>
 
       {open && (
-        <div className="w-[320px] max-h-[70vh] overflow-y-auto rounded-lg border border-white/10 bg-black/75 backdrop-blur p-3 text-xs space-y-4 animate-[fadeIn_200ms_ease-out]">
+        <div className="w-[320px] max-h-[70vh] overflow-y-auto rounded-lg border border-white/20 bg-black/75 backdrop-blur p-3 text-xs space-y-4 animate-[fadeIn_200ms_ease-out]">
           <section>
             <h3 className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-muted)] mb-2">
               인기 이벤트
@@ -130,7 +130,7 @@ export function ActivityPanel({ events }: Props) {
                 {recent.slice(0, 8).map((c) => {
                   const e = eventById.get(c.event_id)
                   return (
-                    <li key={c.id} className="border-l-2 border-white/15 pl-2">
+                    <li key={c.id} className="bg-white/[0.04] hover:bg-white/[0.07] rounded-md px-2 py-1.5">
                       <button
                         onClick={() => {
                           if (!e) return
