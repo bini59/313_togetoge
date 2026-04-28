@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GBC Timeline',
+  title: 'Togetoge',
   description: '걸즈 밴드 크라이 연대기',
 }
 
