@@ -53,7 +53,10 @@ create policy comments_read on comments
 
 -- Aggregated view: derives per-event counts from participation_clients atomically.
 -- Eliminates the read-modify-write race in the participate API.
-create or replace view participation_counts as
+-- security_invoker=false (DEFINER) lets anon read aggregate counts without
+-- exposing client_ids (the underlying participation_clients table stays RLS-locked).
+create or replace view participation_counts
+  with (security_invoker = false) as
   select event_id, count(*)::int as count
   from participation_clients
   group by event_id;

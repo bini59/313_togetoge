@@ -13,7 +13,7 @@ export const songs: Song[] = [
   { id: 'kiutsu-hakudaku-su', title: '気鬱、白濁す', youtubeId: '7R7EcEefRNI', highlightStartSec: 58 },
   { id: 'hazete-saku', title: '爆ぜて咲く', youtubeId: 'LU3f8ZGfd5g', highlightStartSec: 55 },
   { id: 'gokushiteki-answer', title: '極私的極彩色アンサー', youtubeId: '8eFicWRSgT8', highlightStartSec: 62 },
-  { id: 'unmei-ni-kaketai', title: '運命に賭けたい論理', youtubeId: 'waC_L2udTco', highlightStartSec: 58 },
+  { id: 'unmei-ni-kaketai', title: '運命に賭けたい論理', youtubeId: 'waC_L2udTco', highlightStartSec: 52 },
   { id: 'zattou-bokura', title: '雑踏、僕らの街 (Wrong World)', youtubeId: 'EXXcEL3RHbk', highlightStartSec: 50 },
   // 공식 MV 미발표 — 4th ONE-MAN LIVE 영상 사용 (라이브는 인트로/MC 후 노래 시작 지점)
   { id: 'dare-ni-mo-narenai', title: '誰にもなれない私だから', youtubeId: '0qiqkY8fSvM', highlightStartSec: 90 },

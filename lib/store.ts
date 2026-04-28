@@ -26,7 +26,10 @@ interface PlaybackState {
 const RESTART_THRESHOLD_SEC = 20
 
 export const usePlayback = create<PlaybackState>((set, get) => ({
-  sessionSeed: typeof window === 'undefined' ? '' : String(Date.now()),
+  // Stable across SSR + initial CSR render to avoid hydration mismatch.
+  // The sessionSeed only affects which YouTube id is picked from a setlist,
+  // and that selection happens after first user interaction.
+  sessionSeed: 'gbc',
   currentEventId: null,
   isPlaying: false,
   programmaticUntil: 0,

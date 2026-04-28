@@ -10,6 +10,7 @@ import { ActivityPanel } from './ActivityPanel'
 import { CinemaChrome } from './CinemaChrome'
 import { CommentsScattered } from './CommentsScattered'
 import { FocusOverlay } from './FocusOverlay'
+import { Player } from './Player'
 import { TimelineToolbar } from './TimelineToolbar'
 
 interface Props {
@@ -22,7 +23,6 @@ const STEM_BASE = 90
 const STEM_STEP = 32
 const SECTION_MS_WITH_VIDEO = 10_000
 const SECTION_MS_NO_VIDEO = 5_000
-const PLAYHEAD_HALF_WIDTH = 7
 
 export function Timeline({ events }: Props) {
   const { currentEventId, setCurrent, play, pause, isPlaying } = usePlayback()
@@ -32,10 +32,7 @@ export function Timeline({ events }: Props) {
     if (typeof window === 'undefined') return true
     return window.localStorage.getItem('gbc_player_open') !== '0'
   })
-  const [cinemaMode, setCinemaMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
-    return window.localStorage.getItem('gbc_cinema') === '1'
-  })
+  const cinemaMode = true
 
   const stripRef = useRef<HTMLDivElement | null>(null)
   const progressBarRef = useRef<HTMLDivElement | null>(null)
@@ -46,10 +43,6 @@ export function Timeline({ events }: Props) {
     if (typeof window === 'undefined') return
     window.localStorage.setItem('gbc_player_open', playerOpen ? '1' : '0')
   }, [playerOpen])
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem('gbc_cinema', cinemaMode ? '1' : '0')
-  }, [cinemaMode])
 
   useEffect(() => {
     fetch('/api/participate')
@@ -124,9 +117,6 @@ export function Timeline({ events }: Props) {
         focusMode={focusMode}
         sceneTint={sceneTint}
         yearSlate={yearSlate}
-        activeEvent={activeEvent}
-        events={events}
-        showBgVideo={playerOpen}
       />
 
       {focusMode && activeEvent && (
@@ -156,19 +146,20 @@ export function Timeline({ events }: Props) {
           <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-px bg-white/30" />
           <div
             ref={progressBarRef}
-            className="absolute left-0 top-1/2 h-[2px] -translate-y-px bg-[var(--color-accent)] shadow-[0_0_12px_var(--color-accent)] pointer-events-none"
-            style={{ width: 0, opacity: 0 }}
+            className="absolute left-0 top-1/2 h-[2px] -translate-y-px bg-[var(--color-accent)] shadow-[0_0_12px_var(--color-accent)] pointer-events-none origin-left"
+            style={{ width: 1, opacity: 0, transform: 'scaleX(0)' }}
           />
           <div
             ref={playheadRef}
-            className={`absolute z-10 top-1/2 -translate-y-1/2 ${
-              isPlaying ? '' : 'transition-[left] duration-500 ease-out'
+            className={`absolute z-10 top-1/2 left-0 pointer-events-none ${
+              isPlaying ? '' : 'transition-transform duration-500 ease-out'
             }`}
             style={{
-              left: -PLAYHEAD_HALF_WIDTH,
               width: 14,
               height: 14,
+              marginLeft: -7,
               opacity: 0,
+              transform: 'translate3d(0, -50%, 0)',
             }}
           >
             <div className="w-full h-full rounded-full bg-[var(--color-accent)] shadow-[0_0_16px_var(--color-accent)]" />
@@ -271,15 +262,17 @@ export function Timeline({ events }: Props) {
 
       {activeEvent && (
         <TimelineToolbar
-          activeEvent={activeEvent}
-          events={events}
           isPlaying={isPlaying}
           playerOpen={playerOpen}
-          cinemaMode={cinemaMode}
           onPlayToggle={() => (isPlaying ? pause() : play())}
           onPlayerToggle={() => setPlayerOpen((v) => !v)}
-          onCinemaToggle={() => setCinemaMode((v) => !v)}
         />
+      )}
+
+      {activeEvent && playerOpen && (
+        <div className="cinema-bg-video" aria-hidden>
+          <Player events={events} />
+        </div>
       )}
 
       <ActivityPanel events={events} />

@@ -47,6 +47,14 @@ export function useCinemaEffects(activeEvent: TimelineEvent | null, cinemaMode: 
       gain.gain.exponentialRampToValueAtTime(0.06, now + 0.05)
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6)
       osc.connect(gain).connect(ctx.destination)
+      osc.onended = () => {
+        try {
+          osc.disconnect()
+          gain.disconnect()
+        } catch {
+          // already disconnected
+        }
+      }
       osc.start(now)
       osc.stop(now + 0.65)
     } catch {

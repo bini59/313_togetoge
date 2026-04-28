@@ -23,7 +23,6 @@ interface Args {
   onSectionEnd: (eventId: string) => void
 }
 
-const PLAYHEAD_HALF_WIDTH = 7
 const SCROLL_FOLLOW_LERP = 0.15
 
 function setPlayhead(
@@ -34,12 +33,14 @@ function setPlayhead(
 ) {
   const bar = progressBarRef.current
   if (bar) {
-    bar.style.width = `${Math.max(0, x)}px`
+    bar.style.transform = `scaleX(${Math.max(0, x)})`
     bar.style.opacity = visible ? '1' : '0'
   }
   const head = playheadRef.current
   if (head) {
-    head.style.left = `${x - PLAYHEAD_HALF_WIDTH}px`
+    // translate3d gives a clean GPU-composited position that doesn't conflict
+    // with React's inline style reconciliation on re-render.
+    head.style.transform = `translate3d(${x}px, -50%, 0)`
     head.style.opacity = visible ? '1' : '0'
   }
 }

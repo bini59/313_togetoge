@@ -53,11 +53,21 @@ export function ActivityPanel({ events }: Props) {
         .catch((err) => console.warn('activity load failed', err))
     }
     load()
-    if (!open) return () => { alive = false }
+    function onVisible() {
+      if (document.visibilityState === 'visible') load()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    if (!open) {
+      return () => {
+        alive = false
+        document.removeEventListener('visibilitychange', onVisible)
+      }
+    }
     const id = setInterval(load, 20_000)
     return () => {
       alive = false
       clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [open])
 

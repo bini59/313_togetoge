@@ -7,9 +7,16 @@ import type { TimelineEvent } from '@/lib/types'
 interface Props {
   events: TimelineEvent[]
   onEnded?: (eventId: string) => void
+  /** Mute the audio track. Used when this Player acts as a background visual layer. */
+  muted?: boolean
 }
 
-export function Player({ events, onEnded }: Props) {
+const ALLOWED_ORIGINS = new Set([
+  'https://www.youtube.com',
+  'https://www.youtube-nocookie.com',
+])
+
+export function Player({ events, onEnded, muted = false }: Props) {
   const { currentEventId, isPlaying, sessionSeed, recordProgress, consumeStartTime } = usePlayback()
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
@@ -27,21 +34,28 @@ export function Player({ events, onEnded }: Props) {
   )
   const youtubeId = resolved.youtubeId
 
-  // Re-evaluate only when the videoId changes, not on every render —
-  // otherwise the iframe would keep resetting.
-  const startSecRef = useRef(0)
-  const lastIdRef = useRef<string | null>(null)
-  if (youtubeId && lastIdRef.current !== youtubeId) {
+  // Compute resume start once per video. consumeStartTime is a pure read on the
+  // store; safe inside useMemo. The iframe `key` is youtubeId only, so this
+  // value never causes a remount on its own.
+  const startSec = useMemo(() => {
+    if (!youtubeId) return 0
     const resumed = consumeStartTime(youtubeId)
-    // Resume position wins if we have one; otherwise jump to the song's
-    // highlight (chorus) start when defined.
-    startSecRef.current =
-      resumed > 0 ? resumed : (resolved.song?.highlightStartSec ?? 0)
-    lastIdRef.current = youtubeId
-  }
-  const startSec = startSecRef.current
+    return resumed > 0 ? resumed : (resolved.song?.highlightStartSec ?? 0)
+  }, [youtubeId, resolved.song, consumeStartTime])
 
-  // Ask the iframe to push infoDelivery events (currentTime, duration).
+  const src = useMemo(() => {
+    if (!youtubeId) return null
+    const params = new URLSearchParams({
+      enablejsapi: '1',
+      autoplay: isPlaying ? '1' : '0',
+      rel: '0',
+      modestbranding: '1',
+    })
+    if (startSec > 0) params.set('start', String(startSec))
+    if (muted) params.set('mute', '1')
+    return `https://www.youtube.com/embed/${youtubeId}?${params.toString()}`
+  }, [youtubeId, isPlaying, startSec, muted])
+
   useEffect(() => {
     if (!youtubeId) return
     const iframe = iframeRef.current
@@ -53,7 +67,6 @@ export function Player({ events, onEnded }: Props) {
         JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }),
         '*',
       )
-      // Opt-in to onStateChange + infoDelivery streams.
       ;['onStateChange', 'infoDelivery'].forEach((ev) => {
         win.postMessage(
           JSON.stringify({ event: 'command', func: 'addEventListener', args: [ev], id: 1 }),
@@ -62,16 +75,11 @@ export function Player({ events, onEnded }: Props) {
       })
     }
     iframe.addEventListener('load', subscribe)
-    // Already-loaded edge case
     subscribe()
     return () => iframe.removeEventListener('load', subscribe)
   }, [youtubeId])
 
   useEffect(() => {
-    const ALLOWED_ORIGINS = new Set([
-      'https://www.youtube.com',
-      'https://www.youtube-nocookie.com',
-    ])
     function onMessage(e: MessageEvent) {
       if (!ALLOWED_ORIGINS.has(e.origin)) return
       if (typeof e.data !== 'string') return
@@ -93,24 +101,13 @@ export function Player({ events, onEnded }: Props) {
     return () => window.removeEventListener('message', onMessage)
   }, [currentEventId, onEnded, youtubeId, recordProgress])
 
-  if (!youtubeId) {
+  if (!src) {
     return (
       <div className="aspect-video w-full bg-black/40 grid place-items-center text-sm text-[var(--color-muted)]">
         재생할 영상이 선택되지 않았습니다.
       </div>
     )
   }
-
-  const src = useMemo(() => {
-    const params = new URLSearchParams({
-      enablejsapi: '1',
-      autoplay: isPlaying ? '1' : '0',
-      rel: '0',
-      modestbranding: '1',
-    })
-    if (startSec > 0) params.set('start', String(startSec))
-    return `https://www.youtube.com/embed/${youtubeId}?${params.toString()}`
-  }, [youtubeId, isPlaying, startSec])
 
   return (
     <iframe

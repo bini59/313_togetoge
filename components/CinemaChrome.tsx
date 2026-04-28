@@ -1,37 +1,19 @@
 'use client'
-import type { TimelineEvent } from '@/lib/types'
-import { Player } from './Player'
 
 interface Props {
   cinemaMode: boolean
   focusMode: boolean
   sceneTint: string
   yearSlate: string | null
-  activeEvent: TimelineEvent | null
-  events: TimelineEvent[]
-  showBgVideo: boolean
 }
 
-export function CinemaChrome({
-  cinemaMode,
-  focusMode,
-  sceneTint,
-  yearSlate,
-  activeEvent,
-  events,
-  showBgVideo,
-}: Props) {
+export function CinemaChrome({ cinemaMode, focusMode, sceneTint, yearSlate }: Props) {
   return (
     <>
       <div
         className="cinema-backdrop"
         style={{ ['--scene-tint' as string]: sceneTint }}
       />
-      {cinemaMode && activeEvent && showBgVideo && (
-        <div className="cinema-bg-video">
-          <Player events={events} />
-        </div>
-      )}
       {cinemaMode && <div className="cinema-vignette" />}
       {cinemaMode && <div className="cinema-grain" />}
       {cinemaMode && (
