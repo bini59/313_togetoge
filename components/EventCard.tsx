@@ -27,7 +27,7 @@ export function EventCard({ event, participationCount, alreadyParticipated }: Pr
     <article
       ref={ref}
       data-event-id={event.id}
-      className={`relative pl-8 pr-4 py-6 border-l-2 transition-colors ${
+      className={`relative pl-6 sm:pl-8 pr-2 sm:pr-4 py-5 sm:py-6 border-l-2 transition-colors ${
         isActive ? 'border-[var(--color-accent)] bg-white/5' : 'border-white/10'
       }`}
     >
