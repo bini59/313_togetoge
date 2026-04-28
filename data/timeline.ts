@@ -3,22 +3,26 @@ import type { Setlist, Song, TimelineEvent } from '@/lib/types'
 // YouTube ID는 토게나시토게아리 공식 채널/Universal Music 게시 영상 기준.
 // 일부는 공식 MV가 미공개라 ONE-MAN LIVE 영상으로 대체 (주석 표시).
 // 「雑踏、僕らの街」가 곧 영문 타이틀 "Wrong World"(TVA OP), 즉 동일 곡.
+//
+// highlightStartSec: 첫 사비/하이라이트 진입점 추정값(초). 공개된 챕터 데이터가
+// 없어 J-rock 곡 구성(인트로+1버스+프리코러스+사비) 기준 휴리스틱이다. 정확한
+// 타임스탬프를 알게 되면 곡별로 조정.
 export const songs: Song[] = [
-  { id: 'na-mo-naki', title: '名もなき何もかも', youtubeId: 'dDwN4MgcIlU' },
-  { id: 'itsuwari-no-kotowari', title: '偽りの理', youtubeId: 'LgoRQSPS-3Y' },
-  { id: 'kiutsu-hakudaku-su', title: '気鬱、白濁す', youtubeId: '7R7EcEefRNI' },
-  { id: 'hazete-saku', title: '爆ぜて咲く', youtubeId: 'LU3f8ZGfd5g' },
-  { id: 'gokushiteki-answer', title: '極私的極彩色アンサー', youtubeId: '8eFicWRSgT8' },
-  { id: 'unmei-ni-kaketai', title: '運命に賭けたい論理', youtubeId: 'waC_L2udTco' },
-  { id: 'zattou-bokura', title: '雑踏、僕らの街 (Wrong World)', youtubeId: 'EXXcEL3RHbk' },
-  // 공식 MV 미발표 — 4th ONE-MAN LIVE 영상 사용
-  { id: 'dare-ni-mo-narenai', title: '誰にもなれない私だから', youtubeId: '0qiqkY8fSvM' },
+  { id: 'na-mo-naki', title: '名もなき何もかも', youtubeId: 'dDwN4MgcIlU', highlightStartSec: 60 },
+  { id: 'itsuwari-no-kotowari', title: '偽りの理', youtubeId: 'LgoRQSPS-3Y', highlightStartSec: 55 },
+  { id: 'kiutsu-hakudaku-su', title: '気鬱、白濁す', youtubeId: '7R7EcEefRNI', highlightStartSec: 58 },
+  { id: 'hazete-saku', title: '爆ぜて咲く', youtubeId: 'LU3f8ZGfd5g', highlightStartSec: 55 },
+  { id: 'gokushiteki-answer', title: '極私的極彩色アンサー', youtubeId: '8eFicWRSgT8', highlightStartSec: 62 },
+  { id: 'unmei-ni-kaketai', title: '運命に賭けたい論理', youtubeId: 'waC_L2udTco', highlightStartSec: 58 },
+  { id: 'zattou-bokura', title: '雑踏、僕らの街 (Wrong World)', youtubeId: 'EXXcEL3RHbk', highlightStartSec: 50 },
+  // 공식 MV 미발표 — 4th ONE-MAN LIVE 영상 사용 (라이브는 인트로/MC 후 노래 시작 지점)
+  { id: 'dare-ni-mo-narenai', title: '誰にもなれない私だから', youtubeId: '0qiqkY8fSvM', highlightStartSec: 90 },
   // 공식 MV 미발표 — 5th ONE-MAN LIVE 영상 사용
-  { id: 'shikai-no-sumi', title: '視界の隅 朽ちる音', youtubeId: 'qLLOWnk602c' },
+  { id: 'shikai-no-sumi', title: '視界の隅 朽ちる音', youtubeId: 'qLLOWnk602c', highlightStartSec: 80 },
   // 공식 MV 미발표 — 2nd ONE-MAN LIVE 영상 사용
-  { id: 'kuhaku-catharsis', title: '空白とカタルシス', youtubeId: 'P5B0E5ZjfnM' },
-  { id: 'daremo', title: 'ダレモ', youtubeId: 'egoue2V-TAk' },
-  { id: 'hakusai-display', title: '薄采ディスプレイ', youtubeId: '-etkkmuzZmM' },
+  { id: 'kuhaku-catharsis', title: '空白とカタルシス', youtubeId: 'P5B0E5ZjfnM', highlightStartSec: 85 },
+  { id: 'daremo', title: 'ダレモ', youtubeId: 'egoue2V-TAk', highlightStartSec: 55 },
+  { id: 'hakusai-display', title: '薄采ディスプレイ', youtubeId: '-etkkmuzZmM', highlightStartSec: 60 },
 ]
 
 // 실제 셋리스트는 미확인. sl-tba는 전체 곡 풀을 사용해 페스/라이브마다

@@ -13,6 +13,12 @@ export interface Song {
   id: string
   title: string
   youtubeId: string
+  /**
+   * Seconds into the YouTube video where the first chorus / highlight
+   * begins. Used as the default start position when this song is played
+   * for the first time. Heuristic when precise timing is unknown.
+   */
+  highlightStartSec?: number
 }
 
 export interface Setlist {

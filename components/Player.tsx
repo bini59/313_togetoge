@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef } from 'react'
 import { usePlayback } from '@/lib/store'
-import { resolveYoutubeId } from '@/lib/songMatcher'
+import { resolveSong } from '@/lib/songMatcher'
 import type { TimelineEvent } from '@/lib/types'
 
 interface Props {
@@ -18,19 +18,25 @@ export function Player({ events, onEnded }: Props) {
     [events, currentEventId],
   )
 
-  const youtubeId = useMemo(
-    () => (currentEvent ? resolveYoutubeId(currentEvent, sessionSeed) : null),
+  const resolved = useMemo(
+    () =>
+      currentEvent
+        ? resolveSong(currentEvent, sessionSeed)
+        : { youtubeId: null as string | null, song: null },
     [currentEvent, sessionSeed],
   )
+  const youtubeId = resolved.youtubeId
 
-  // Resolve start offset once per (youtubeId, eventId) combo. We capture it
-  // when the video mounts so the iframe key/src is stable for the session.
   // Re-evaluate only when the videoId changes, not on every render —
-  // otherwise the iframe would keep resetting. consumeStartTime is stable.
+  // otherwise the iframe would keep resetting.
   const startSecRef = useRef(0)
   const lastIdRef = useRef<string | null>(null)
   if (youtubeId && lastIdRef.current !== youtubeId) {
-    startSecRef.current = consumeStartTime(youtubeId)
+    const resumed = consumeStartTime(youtubeId)
+    // Resume position wins if we have one; otherwise jump to the song's
+    // highlight (chorus) start when defined.
+    startSecRef.current =
+      resumed > 0 ? resumed : (resolved.song?.highlightStartSec ?? 0)
     lastIdRef.current = youtubeId
   }
   const startSec = startSecRef.current

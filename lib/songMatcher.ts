@@ -16,22 +16,39 @@ function pickRandom<T>(arr: readonly T[], seed: string): T | undefined {
 }
 
 export function resolveYoutubeId(event: TimelineEvent, sessionSeed = ''): string | null {
+  return resolveSong(event, sessionSeed).youtubeId
+}
+
+/**
+ * Resolve both the YouTube ID and the matching Song (when one exists) for an
+ * event. Used when callers need the song's metadata — e.g. highlightStartSec.
+ */
+export function resolveSong(
+  event: TimelineEvent,
+  sessionSeed = '',
+): { youtubeId: string | null; song: import('./types').Song | null } {
   switch (event.type) {
     case 'live':
     case 'fes': {
-      if (event.liveYoutubeId) return event.liveYoutubeId
+      if (event.liveYoutubeId) return { youtubeId: event.liveYoutubeId, song: null }
       const list = setlistById.get(event.setlistId)
-      if (!list) return null
+      if (!list) return { youtubeId: null, song: null }
       const songId = pickRandom(list.songIds, event.id + sessionSeed)
-      if (!songId) return null
-      return songById.get(songId)?.youtubeId ?? null
+      if (!songId) return { youtubeId: null, song: null }
+      const song = songById.get(songId) ?? null
+      return { youtubeId: song?.youtubeId ?? null, song }
     }
-    case 'album':
-      return songById.get(event.titleSongId)?.youtubeId ?? null
+    case 'album': {
+      const song = songById.get(event.titleSongId) ?? null
+      return { youtubeId: song?.youtubeId ?? null, song }
+    }
     default: {
-      if (event.youtubeId) return event.youtubeId
-      if (event.songId) return songById.get(event.songId)?.youtubeId ?? null
-      return null
+      if (event.youtubeId) return { youtubeId: event.youtubeId, song: null }
+      if (event.songId) {
+        const song = songById.get(event.songId) ?? null
+        return { youtubeId: song?.youtubeId ?? null, song }
+      }
+      return { youtubeId: null, song: null }
     }
   }
 }
