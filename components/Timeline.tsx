@@ -30,14 +30,6 @@ export function Timeline({ events }: Props) {
   } = usePlayback()
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [participated, setParticipated] = useState<Set<string>>(new Set())
-  const [playerOpen, setPlayerOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
-    return window.localStorage.getItem('gbc_player_open') === '1'
-  })
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem('gbc_player_open', playerOpen ? '1' : '0')
-  }, [playerOpen])
   const [progress, setProgress] = useState(0)
   const stripRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -77,12 +69,6 @@ export function Timeline({ events }: Props) {
     const el = itemRefs.current.get(activeEvent.id)
     el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [activeEvent, isPlaying])
-
-  function startFromBeginning() {
-    if (events.length === 0) return
-    setCurrent(events[0].id)
-    play()
-  }
 
   function advanceToNext(currentId: string) {
     const idx = events.findIndex((e) => e.id === currentId)
@@ -317,50 +303,23 @@ export function Timeline({ events }: Props) {
         </p>
       </div>
 
-      <div className="absolute bottom-6 left-6 z-20 flex gap-2">
-        {currentEventId === null ? (
+      {currentEventId !== null && (
+        <div className="absolute bottom-6 left-6 z-20">
           <button
-            onClick={startFromBeginning}
-            className="px-3 py-1.5 text-xs rounded-full bg-[var(--color-accent)] hover:opacity-90"
+            onClick={() => {
+              setCurrent(null)
+              pause()
+            }}
+            className="px-3 py-1.5 text-xs rounded-full bg-white/5 hover:bg-white/10 text-[var(--color-muted)] backdrop-blur"
           >
-            ▶ 처음부터
+            초기화
           </button>
-        ) : (
-          <>
-            <button
-              onClick={() => (isPlaying ? pause() : play())}
-              className="px-3 py-1.5 text-xs rounded-full bg-white/10 hover:bg-white/20 backdrop-blur"
-            >
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-            <button
-              onClick={() => {
-                setCurrent(null)
-                pause()
-                setPlayerOpen(false)
-              }}
-              className="px-3 py-1.5 text-xs rounded-full bg-white/5 hover:bg-white/10 text-[var(--color-muted)] backdrop-blur"
-            >
-              초기화
-            </button>
-          </>
-        )}
-        {activeEvent && (
-          <button
-            onClick={() => setPlayerOpen((v) => !v)}
-            className="px-3 py-1.5 text-xs rounded-full bg-white/5 hover:bg-white/10 backdrop-blur"
-          >
-            {playerOpen ? '영상 숨기기' : '영상 보기'}
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {activeEvent && (
         <div
-          className={`absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/60 backdrop-blur transition-opacity ${
-            playerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          aria-hidden={!playerOpen}
+          className="absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/60 backdrop-blur"
         >
           <Player events={events} />
         </div>
