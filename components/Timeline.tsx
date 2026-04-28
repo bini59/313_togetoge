@@ -196,14 +196,6 @@ export function Timeline({ events }: Props) {
         className="cinema-backdrop"
         style={{ ['--scene-tint' as string]: sceneTint }}
       />
-      {cinemaMode && activeEvent && (
-        <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 scale-110 blur-md opacity-30">
-            <Player events={events} />
-          </div>
-          <div className="absolute inset-0 bg-black/55" />
-        </div>
-      )}
       {cinemaMode && <div className="cinema-vignette" />}
       {cinemaMode && <div className="cinema-grain" />}
       {cinemaMode && (
@@ -250,7 +242,7 @@ export function Timeline({ events }: Props) {
               </time>
             </div>
             <h2
-              className="mt-4 text-4xl sm:text-6xl font-bold tracking-tight leading-[1.02]"
+              className="mt-4 text-3xl sm:text-5xl font-bold tracking-tight leading-[1.05]"
               style={{ fontFamily: 'var(--font-serif-kr)' }}
             >
               {activeEvent.title}
@@ -448,7 +440,7 @@ export function Timeline({ events }: Props) {
         </div>
       )}
 
-      {activeEvent && !cinemaMode && (
+      {activeEvent && (
         <div
           className={`absolute bottom-6 right-6 z-[45] w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-black/60 backdrop-blur transition-opacity ${
             playerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
