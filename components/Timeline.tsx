@@ -222,7 +222,7 @@ export function Timeline({ events }: Props) {
         <div
           key={activeEvent.id}
           className="absolute left-0 right-0 top-0 h-[68%] z-10 flex items-center justify-center px-8 sm:px-16 pointer-events-none"
-          style={{ animation: 'dissolveIn 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both' }}
+          style={{ animation: 'dissolveIn 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both' }}
         >
           <div className="max-w-3xl w-full">
             <div
