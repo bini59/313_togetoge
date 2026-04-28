@@ -6,6 +6,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 
 const config: NextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   turbopack: {
     root: here,
   },

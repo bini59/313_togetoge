@@ -22,6 +22,7 @@ export default [
         HTMLIFrameElement: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
+        Buffer: 'readonly',
       },
     },
     rules: {

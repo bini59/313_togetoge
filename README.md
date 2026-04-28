@@ -53,13 +53,15 @@ tests/               vitest 테스트
 
 ## 환경 변수
 
-`.env.local` 생성:
+`.env.local` 생성 (호스티드 Supabase 사용 시):
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...   # API 라우트에서만 사용
 ```
+
+로컬 docker-compose를 쓰면 `.env.docker.example`을 `.env`로 복사해 그대로 사용.
 
 ## 실행
 
@@ -74,6 +76,33 @@ pnpm typecheck    # tsc --noEmit
 ```
 
 Supabase 스키마는 `supabase/schema.sql`을 Supabase 대시보드 SQL Editor에 붙여넣어 적용.
+
+## Local stack via Docker
+
+전체 스택(Postgres + PostgREST + Caddy gateway + Next.js)을 docker-compose로 한 번에 띄울 수 있습니다.
+
+```bash
+cp .env.docker.example .env       # 로컬 dev용 시크릿/JWT
+docker compose up -d --build      # 전체 스택 기동
+# → 앱:    http://localhost:3200
+# → REST: http://localhost:8000/rest/v1/...
+docker compose down               # 정리 (볼륨 유지)
+docker compose down -v            # DB 데이터까지 초기화
+```
+
+구성:
+- `db` (postgres:17-alpine) — `docker/db/init/`의 SQL을 순서대로 실행하여 롤
+  (`anon`/`authenticated`/`authenticator`/`service_role`)과 스키마를 부팅 시 1회 적용.
+- `postgrest` — `authenticator`로 접속, JWT 클레임의 `role`을 따라 권한 전환.
+- `gateway` (caddy:2-alpine) — `/rest/v1/*`만 PostgREST로 프록시.
+- `app` — `Dockerfile`(multi-stage, Next.js standalone) 기반.
+
+JWT 재발급:
+```bash
+SUPABASE_JWT_SECRET="..." node scripts/gen-jwt.mjs
+```
+
+> docker-compose 환경에서는 schema.sql이 init 디렉토리에서만 적용됩니다. 컨테이너 운영 중 스키마 변경은 `psql` 또는 `supabase/schema.sql`을 호스팅 환경에 적용하는 식으로 별도 처리하세요.
 
 ## Pre-commit Hook
 
