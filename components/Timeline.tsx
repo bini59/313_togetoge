@@ -2,18 +2,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TimelineEvent } from '@/lib/types'
 import { TYPE_COLOR, TYPE_LABEL } from '@/lib/eventLabels'
+import { resolveYoutubeId } from '@/lib/songMatcher'
 import { usePlayback } from '@/lib/store'
 import { Player } from './Player'
 import { ParticipateButton } from './ParticipateButton'
 import { Comments } from './Comments'
+import { ActivityPanel } from './ActivityPanel'
 
 interface Props {
   events: TimelineEvent[]
 }
 
-const ITEM_WIDTH = 160
+const ITEM_WIDTH_VIDEO = 160
+const ITEM_WIDTH_NO_VIDEO = 80
 const STEM_BASE = 90
 const STEM_STEP = 32
+const SECTION_MS_WITH_VIDEO = 10_000
+const SECTION_MS_NO_VIDEO = 5_000
 
 export function Timeline({ events }: Props) {
   const {
@@ -25,8 +30,17 @@ export function Timeline({ events }: Props) {
   } = usePlayback()
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [participated, setParticipated] = useState<Set<string>>(new Set())
-  const [playerOpen, setPlayerOpen] = useState(false)
+  const [playerOpen, setPlayerOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('gbc_player_open') === '1'
+  })
   const [detailOpen, setDetailOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('gbc_player_open', playerOpen ? '1' : '0')
+  }, [playerOpen])
+  const [progress, setProgress] = useState(0)
   const stripRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
 
@@ -40,6 +54,20 @@ export function Timeline({ events }: Props) {
       .catch(() => {})
   }, [])
 
+  const slots = useMemo(() => {
+    let x = 0
+    return events.map((e) => {
+      const hasVideo = resolveYoutubeId(e) !== null
+      const w = hasVideo ? ITEM_WIDTH_VIDEO : ITEM_WIDTH_NO_VIDEO
+      const slot = { x, w, hasVideo, center: x + w / 2 }
+      x += w
+      return slot
+    })
+  }, [events])
+  const totalWidth = slots.length
+    ? slots[slots.length - 1].x + slots[slots.length - 1].w
+    : 0
+
   const activeIndex = useMemo(
     () => events.findIndex((e) => e.id === currentEventId),
     [events, currentEventId],
@@ -47,16 +75,15 @@ export function Timeline({ events }: Props) {
   const activeEvent = activeIndex >= 0 ? events[activeIndex] : null
 
   useEffect(() => {
-    if (!activeEvent) return
+    if (!activeEvent || isPlaying) return
     const el = itemRefs.current.get(activeEvent.id)
     el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }, [activeEvent])
+  }, [activeEvent, isPlaying])
 
   function startFromBeginning() {
     if (events.length === 0) return
     setCurrent(events[0].id)
     play()
-    setPlayerOpen(true)
   }
 
   function advanceToNext(currentId: string) {
@@ -68,14 +95,53 @@ export function Timeline({ events }: Props) {
     }
   }
 
-  const playheadX =
-    activeIndex >= 0 ? activeIndex * ITEM_WIDTH + ITEM_WIDTH / 2 : -9999
+  useEffect(() => {
+    if (!isPlaying || !activeEvent) {
+      setProgress(0)
+      return
+    }
+    let raf = 0
+    const start = performance.now()
+    const hasVideo = resolveYoutubeId(activeEvent) !== null
+    const sectionMs = hasVideo ? SECTION_MS_WITH_VIDEO : SECTION_MS_NO_VIDEO
+    const tick = (t: number) => {
+      const p = Math.min((t - start) / sectionMs, 1)
+      setProgress(p)
+
+      const strip = stripRef.current
+      const fromSlot = slots[activeIndex]
+      const toSlot = slots[activeIndex + 1] ?? fromSlot
+      if (strip && fromSlot) {
+        const headX = fromSlot.center + (toSlot.center - fromSlot.center) * p
+        const target = headX - strip.clientWidth / 2
+        const max = strip.scrollWidth - strip.clientWidth
+        const clamped = Math.max(0, Math.min(target, max))
+        strip.scrollLeft += (clamped - strip.scrollLeft) * 0.15
+      }
+
+      if (p >= 1) {
+        advanceToNext(activeEvent.id)
+        return
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+    // advanceToNext intentionally omitted, stable closure per active event
+  }, [isPlaying, activeEvent?.id, events])
+
+  const playheadX = (() => {
+    const from = slots[activeIndex]
+    if (!from) return -9999
+    const to = slots[activeIndex + 1] ?? from
+    return from.center + (isPlaying ? progress * (to.center - from.center) : 0)
+  })()
 
   const focusMode = isPlaying && !!activeEvent
 
   return (
     <div className="relative h-full w-full">
-      {focusMode && activeEvent && (
+      {focusMode && activeEvent && !detailOpen && (
         <div className="absolute left-0 right-0 top-0 h-[68%] z-10 flex items-center justify-center px-8 sm:px-16 pointer-events-none animate-[fadeIn_400ms_ease-out]">
           <div className="max-w-3xl w-full">
             <div className="flex items-center gap-3 text-xs">
@@ -107,24 +173,31 @@ export function Timeline({ events }: Props) {
 
       <div
         ref={stripRef}
-        className={`absolute left-0 right-0 overflow-x-auto overflow-y-hidden flex items-center transition-all duration-500 ease-out ${
+        className={`no-scrollbar absolute left-0 right-0 overflow-x-auto overflow-y-hidden flex items-center transition-all duration-500 ease-out ${
           focusMode ? 'top-[68%] bottom-0' : 'top-0 bottom-0'
         }`}
       >
         <div
           className="relative shrink-0"
           style={{
-            width: events.length * ITEM_WIDTH,
+            width: totalWidth,
             height: '100%',
           }}
         >
           <div
             className="absolute left-0 right-0 top-1/2 h-px bg-white/15"
           />
+          <div
+            className="absolute left-0 top-1/2 h-px bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]"
+            style={{
+              width: Math.max(0, playheadX),
+              opacity: activeIndex >= 0 ? 1 : 0,
+            }}
+          />
 
           <div
-            className={`absolute z-10 top-1/2 -translate-y-1/2 transition-all duration-700 ease-out ${
-              isPlaying ? 'animate-pulse' : ''
+            className={`absolute z-10 top-1/2 -translate-y-1/2 ${
+              isPlaying ? '' : 'transition-all duration-500 ease-out'
             }`}
             style={{
               left: playheadX - 7,
@@ -137,6 +210,7 @@ export function Timeline({ events }: Props) {
           </div>
 
           {events.map((event, i) => {
+            const slot = slots[i]
             const baseStem = STEM_BASE + (i % 4) * STEM_STEP
             const stemHeight = focusMode ? 24 + (i % 3) * 8 : baseStem
             const stemUp = i % 2 === 0
@@ -152,12 +226,11 @@ export function Timeline({ events }: Props) {
                 onClick={() => {
                   setCurrent(event.id)
                   play()
-                  setPlayerOpen(true)
                 }}
                 className="absolute top-0 h-full text-left group"
                 style={{
-                  left: i * ITEM_WIDTH,
-                  width: ITEM_WIDTH,
+                  left: slot.x,
+                  width: slot.w,
                 }}
               >
                 <div
@@ -181,16 +254,18 @@ export function Timeline({ events }: Props) {
                   }}
                 >
                   <div
-                    className={`-translate-x-1/2 w-1.5 h-1.5 rounded-full transition-all ${
+                    className={`-translate-x-1/2 rounded-full transition-all ${
                       isActive
-                        ? 'bg-[var(--color-accent)] ring-4 ring-[var(--color-accent)]/25'
-                        : 'bg-white/55 group-hover:bg-white'
+                        ? 'bg-[var(--color-accent)] ring-4 ring-[var(--color-accent)]/25 w-1.5 h-1.5'
+                        : (counts[event.id] ?? 0) > 0
+                          ? 'bg-[var(--color-accent)]/80 w-2 h-2'
+                          : 'bg-white/55 group-hover:bg-white w-1.5 h-1.5'
                     }`}
                   />
                   <div
                     className={`absolute left-3 whitespace-nowrap transition-opacity duration-300 ${
                       focusMode && !isActive ? 'opacity-0' : 'opacity-100'
-                    } ${stemUp ? '-top-1' : 'top-1/2 -translate-y-1/2'}`}
+                    } ${stemUp ? '-top-1 -translate-y-full' : 'top-1/2 -translate-y-1/2'}`}
                   >
                     <div className="flex items-center gap-1.5">
                       <span
@@ -209,6 +284,12 @@ export function Timeline({ events }: Props) {
                     >
                       {event.title}
                     </div>
+                    {(counts[event.id] ?? 0) > 0 && (
+                      <div className="mt-0.5 flex items-center gap-1 text-[9px] text-[var(--color-accent)]/90">
+                        <span>♥</span>
+                        <span className="font-mono">{counts[event.id]}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
@@ -218,8 +299,8 @@ export function Timeline({ events }: Props) {
       </div>
 
       <div className="pointer-events-none absolute top-6 left-6 z-20">
-        <h1 className="text-sm font-semibold tracking-[0.3em] text-white/70">
-          GIRLS BAND CRY
+        <h1 className="text-base font-semibold tracking-[0.25em] text-white/85">
+          トゲナシトゲアリ
         </h1>
         <p className="text-[10px] tracking-widest text-[var(--color-muted)] mt-0.5">
           CHRONICLE
@@ -273,14 +354,21 @@ export function Timeline({ events }: Props) {
         )}
       </div>
 
-      {activeEvent && playerOpen && (
-        <div className="absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/60 backdrop-blur">
-          <Player events={events} onEnded={advanceToNext} />
+      {activeEvent && (
+        <div
+          className={`absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/60 backdrop-blur transition-opacity ${
+            playerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-hidden={!playerOpen}
+        >
+          <Player events={events} />
         </div>
       )}
 
-      {activeEvent && detailOpen && !focusMode && (
-        <div className="absolute top-6 right-6 z-20 w-[320px] max-h-[70vh] overflow-y-auto rounded-lg border border-white/10 bg-black/70 backdrop-blur p-4">
+      <ActivityPanel events={events} />
+
+      {activeEvent && detailOpen && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 w-[320px] max-h-[70vh] overflow-y-auto rounded-lg border border-white/10 bg-black/85 backdrop-blur p-4">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <time className="font-mono text-[var(--color-muted)]">
               {activeEvent.date}
