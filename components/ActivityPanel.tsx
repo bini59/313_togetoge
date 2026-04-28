@@ -64,7 +64,7 @@ export function ActivityPanel({ events }: Props) {
   const totalParticipations = top.reduce((s, r) => s + r.count, 0)
 
   return (
-    <div className="absolute top-6 right-6 z-20 flex flex-col items-end gap-2">
+    <div className="absolute top-6 right-6 z-[45] flex flex-col items-end gap-2">
       <button
         onClick={() => setOpen((v) => !v)}
         className="px-3 py-1.5 text-xs rounded-full bg-white/10 hover:bg-white/20 backdrop-blur flex items-center gap-2"

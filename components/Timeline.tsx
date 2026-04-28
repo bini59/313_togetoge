@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TimelineEvent } from '@/lib/types'
-import { TYPE_COLOR, TYPE_LABEL } from '@/lib/eventLabels'
+import { TYPE_COLOR, TYPE_LABEL, TYPE_TINT } from '@/lib/eventLabels'
 import { resolveYoutubeId } from '@/lib/songMatcher'
 import { usePlayback } from '@/lib/store'
 import { Player } from './Player'
@@ -34,10 +34,21 @@ export function Timeline({ events }: Props) {
     if (typeof window === 'undefined') return true
     return window.localStorage.getItem('gbc_player_open') !== '0'
   })
+  const [cinemaMode, setCinemaMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('gbc_cinema') === '1'
+  })
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem('gbc_player_open', playerOpen ? '1' : '0')
   }, [playerOpen])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('gbc_cinema', cinemaMode ? '1' : '0')
+  }, [cinemaMode])
+  const [yearSlate, setYearSlate] = useState<string | null>(null)
+  const prevYearRef = useRef<string | null>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
   const [progress, setProgress] = useState(0)
   const stripRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -77,6 +88,53 @@ export function Timeline({ events }: Props) {
     const el = itemRefs.current.get(activeEvent.id)
     el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [activeEvent, isPlaying])
+
+  // Cinematic transitions: year slate + whoosh on active event change
+  useEffect(() => {
+    if (!activeEvent) {
+      prevYearRef.current = null
+      return
+    }
+    const year = activeEvent.date.slice(0, 4)
+    const prev = prevYearRef.current
+    prevYearRef.current = year
+    if (prev !== null && prev !== year) {
+      setYearSlate(year)
+      const t = setTimeout(() => setYearSlate(null), 1700)
+      return () => clearTimeout(t)
+    }
+    return
+  }, [activeEvent?.id])
+
+  useEffect(() => {
+    if (!activeEvent) return
+    if (typeof window === 'undefined') return
+    try {
+      let ctx = audioCtxRef.current
+      if (!ctx) {
+        const Ctor =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+        if (!Ctor) return
+        ctx = new Ctor()
+        audioCtxRef.current = ctx
+      }
+      const now = ctx.currentTime
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(180, now)
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.6)
+      gain.gain.setValueAtTime(0.0001, now)
+      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.05)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6)
+      osc.connect(gain).connect(ctx.destination)
+      osc.start(now)
+      osc.stop(now + 0.65)
+    } catch {
+      // autoplay policy may block until first gesture; ignore
+    }
+  }, [activeEvent?.id])
 
   function advanceToNext(currentId: string) {
     const idx = events.findIndex((e) => e.id === currentId)
@@ -130,27 +188,74 @@ export function Timeline({ events }: Props) {
   })()
 
   const focusMode = !!activeEvent
+  const sceneTint = activeEvent ? TYPE_TINT[activeEvent.type] : '255, 59, 107'
 
   return (
     <div className="relative h-full w-full">
+      <div
+        className="cinema-backdrop"
+        style={{ ['--scene-tint' as string]: sceneTint }}
+      />
+      {cinemaMode && activeEvent && (
+        <div className="fixed inset-0 z-[1] pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 scale-110 blur-md opacity-40">
+            <Player events={events} />
+          </div>
+          <div className="absolute inset-0 bg-black/45" />
+        </div>
+      )}
+      <div className="cinema-vignette" />
+      <div className="cinema-grain" />
+      <div
+        className="cinema-letterbox top-0"
+        style={{ ['--lb-origin' as string]: 'top' }}
+        data-on={focusMode ? '1' : '0'}
+      />
+      <div
+        className="cinema-letterbox bottom-0"
+        style={{ ['--lb-origin' as string]: 'bottom' }}
+        data-on={focusMode ? '1' : '0'}
+      />
+      {yearSlate && (
+        <div key={yearSlate} className="year-slate">
+          {yearSlate}
+        </div>
+      )}
+
       {focusMode && activeEvent && (
-        <div className="absolute left-0 right-0 top-0 h-[68%] z-10 flex items-center justify-center px-8 sm:px-16 pointer-events-none animate-[fadeIn_400ms_ease-out]">
+        <div
+          key={activeEvent.id}
+          className="absolute left-0 right-0 top-0 h-[68%] z-10 flex items-center justify-center px-8 sm:px-16 pointer-events-none"
+          style={{ animation: 'dissolveIn 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both' }}
+        >
           <div className="max-w-3xl w-full">
-            <div className="flex items-center gap-3 text-xs">
+            <div
+              className="flex items-center gap-3 text-xs"
+              style={{ animation: 'subtitleIn 700ms ease-out 200ms both' }}
+            >
               <span
                 className={`px-2 py-0.5 rounded border text-[10px] uppercase tracking-[0.2em] ${TYPE_COLOR[activeEvent.type]}`}
               >
                 {TYPE_LABEL[activeEvent.type]}
               </span>
-              <time className="font-mono text-[var(--color-muted)] tracking-wider">
+              <time
+                className="text-[var(--color-muted)] tracking-[0.3em]"
+                style={{ fontFamily: 'var(--font-serif-kr)' }}
+              >
                 {activeEvent.date}
               </time>
             </div>
-            <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
+            <h2
+              className="mt-4 text-4xl sm:text-6xl font-bold tracking-tight leading-[1.02]"
+              style={{ fontFamily: 'var(--font-serif-kr)' }}
+            >
               {activeEvent.title}
             </h2>
             {activeEvent.description && (
-              <p className="mt-4 text-sm sm:text-base text-white/70 leading-relaxed max-w-2xl">
+              <p
+                className="mt-5 text-sm sm:text-base text-white/75 leading-relaxed max-w-2xl"
+                style={{ animation: 'subtitleIn 800ms ease-out 350ms both' }}
+              >
                 {activeEvent.description}
               </p>
             )}
@@ -177,7 +282,7 @@ export function Timeline({ events }: Props) {
 
       <div
         ref={stripRef}
-        className={`no-scrollbar absolute left-0 right-0 overflow-x-auto overflow-y-hidden flex items-center transition-all duration-500 ease-out ${
+        className={`no-scrollbar absolute left-0 right-0 z-[2] overflow-x-auto overflow-y-hidden flex items-center transition-all duration-500 ease-out ${
           focusMode ? 'top-[68%] bottom-0' : 'top-0 bottom-0'
         }`}
       >
@@ -258,9 +363,10 @@ export function Timeline({ events }: Props) {
                   }}
                 >
                   <div
+                    style={isActive ? { animation: 'lensPulse 2.4s ease-in-out infinite' } : undefined}
                     className={`-translate-x-1/2 rounded-full transition-all ${
                       isActive
-                        ? 'bg-[var(--color-accent)] ring-4 ring-[var(--color-accent)]/30 shadow-[0_0_18px_var(--color-accent)] w-2 h-2'
+                        ? 'bg-[var(--color-accent)] ring-4 ring-[var(--color-accent)]/30 w-2 h-2'
                         : (counts[event.id] ?? 0) > 0
                           ? 'bg-[var(--color-accent)]/85 w-2 h-2'
                           : 'bg-white/70 group-hover:bg-white w-2 h-2'
@@ -302,7 +408,7 @@ export function Timeline({ events }: Props) {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute top-6 left-6 z-20">
+      <div className="pointer-events-none absolute top-6 left-6 z-[45]">
         <h1 className="text-base font-semibold tracking-[0.25em] text-white/85">
           トゲナシトゲアリ
         </h1>
@@ -312,7 +418,7 @@ export function Timeline({ events }: Props) {
       </div>
 
       {activeEvent && (
-        <div className="absolute bottom-6 left-6 z-20 flex gap-2">
+        <div className="absolute bottom-6 left-6 z-[45] flex gap-2">
           <button
             onClick={() => (isPlaying ? pause() : play())}
             className="px-3 py-1.5 text-xs rounded-full bg-white/10 hover:bg-white/20 backdrop-blur"
@@ -325,12 +431,22 @@ export function Timeline({ events }: Props) {
           >
             {playerOpen ? '영상 숨기기' : '영상 보기'}
           </button>
+          <button
+            onClick={() => setCinemaMode((v) => !v)}
+            className={`px-3 py-1.5 text-xs rounded-full backdrop-blur ${
+              cinemaMode
+                ? 'bg-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/40'
+                : 'bg-white/5 hover:bg-white/10'
+            }`}
+          >
+            시네마 {cinemaMode ? 'ON' : 'OFF'}
+          </button>
         </div>
       )}
 
-      {activeEvent && (
+      {activeEvent && !cinemaMode && (
         <div
-          className={`absolute bottom-6 right-6 z-20 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-black/60 backdrop-blur transition-opacity ${
+          className={`absolute bottom-6 right-6 z-[45] w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-black/60 backdrop-blur transition-opacity ${
             playerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-hidden={!playerOpen}

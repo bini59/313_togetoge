@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&display=swap');
 
 @theme {
   --color-bg: #0a0a0c;
@@ -7,6 +8,7 @@
   --color-muted: #6b7280;
   --border-strong: rgba(255, 255, 255, 0.32);
   --border-weak: rgba(255, 255, 255, 0.18);
+  --font-serif-kr: 'Noto Serif KR', ui-serif, Georgia, serif;
 }
 
 html, body {
@@ -27,5 +29,104 @@ html, body {
   to   { opacity: 1; transform: scale(1) rotate(var(--note-rot, 0deg)); }
 }
 
+@keyframes dissolveIn {
+  0%   { opacity: 0; transform: translateY(18px); letter-spacing: 0.08em; filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0); letter-spacing: 0; filter: blur(0); }
+}
+
+@keyframes subtitleIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes yearSlate {
+  0%   { opacity: 0; transform: scale(1.15); letter-spacing: 0.4em; filter: blur(8px); }
+  20%  { opacity: 1; filter: blur(0); }
+  70%  { opacity: 1; transform: scale(1); letter-spacing: 0.18em; filter: blur(0); }
+  100% { opacity: 0; transform: scale(0.96); filter: blur(4px); }
+}
+
+@keyframes letterboxIn {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes lensPulse {
+  0%, 100% { box-shadow: 0 0 18px var(--color-accent), 0 0 36px rgba(255, 59, 107, 0.45); }
+  50%      { box-shadow: 0 0 26px var(--color-accent), 0 0 60px rgba(255, 59, 107, 0.7); }
+}
+
+@keyframes grainShift {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-2%, 1%); }
+  40%  { transform: translate(1%, -2%); }
+  60%  { transform: translate(-1%, 2%); }
+  80%  { transform: translate(2%, 1%); }
+  100% { transform: translate(0, 0); }
+}
+
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+.cinema-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(var(--scene-tint, 255, 59, 107), 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 75% 80%, rgba(var(--scene-tint, 255, 59, 107), 0.12) 0%, transparent 60%),
+    var(--color-bg);
+  transition: background 900ms ease;
+}
+
+.cinema-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.cinema-grain {
+  position: fixed;
+  inset: -10%;
+  z-index: 31;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grainShift 1.4s steps(5) infinite;
+}
+
+.cinema-letterbox {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 5.5vh;
+  z-index: 40;
+  pointer-events: none;
+  background: #000;
+  transform-origin: var(--lb-origin, top);
+  transform: scaleY(0);
+  transition: transform 700ms cubic-bezier(0.7, 0, 0.2, 1);
+}
+
+.cinema-letterbox[data-on='1'] { transform: scaleY(1); }
+
+.year-slate {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif-kr);
+  font-weight: 700;
+  font-size: clamp(8rem, 22vw, 18rem);
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 8px 60px rgba(0, 0, 0, 0.7);
+  animation: yearSlate 1700ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}

@@ -24,6 +24,18 @@ export const TYPE_LABEL: Record<EventType, string> = {
   movie: '극장판',
 }
 
+export const TYPE_TINT: Record<EventType, string> = {
+  live: '244, 63, 94',
+  fes: '232, 121, 249',
+  album: '251, 191, 36',
+  bd: '52, 211, 153',
+  youtube: '239, 68, 68',
+  radio: '56, 189, 248',
+  new_song: '244, 114, 182',
+  tva: '167, 139, 250',
+  movie: '129, 140, 248',
+}
+
 export const TYPE_COLOR: Record<EventType, string> = {
   live: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
   fes: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40',
