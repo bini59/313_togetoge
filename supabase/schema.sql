@@ -25,8 +25,14 @@ create table if not exists comments (
   created_at timestamptz not null default now()
 );
 
+-- Add client_id column for rate limiting (idempotent, internal-only).
+alter table comments add column if not exists client_id uuid;
+
 create index if not exists idx_comments_event_created
   on comments (event_id, created_at desc);
+
+create index if not exists idx_comments_client_created
+  on comments (client_id, created_at desc);
 
 -- RLS
 alter table participations enable row level security;

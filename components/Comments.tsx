@@ -10,6 +10,7 @@ export function Comments({ eventId }: Props) {
   const [comments, setComments] = useState<CommentRow[]>([])
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancel = false
@@ -25,6 +26,7 @@ export function Comments({ eventId }: Props) {
     const trimmed = text.trim()
     if (!trimmed) return
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch('/api/comments', {
         method: 'POST',
@@ -32,9 +34,11 @@ export function Comments({ eventId }: Props) {
         body: JSON.stringify({ eventId, content: trimmed }),
       })
       const json = await res.json()
-      if (json.comment) {
+      if (res.ok && json.comment) {
         setComments((prev) => [json.comment, ...prev])
         setText('')
+      } else {
+        setError(json.error ?? '전송 실패')
       }
     } finally {
       setLoading(false)
@@ -59,6 +63,11 @@ export function Comments({ eventId }: Props) {
           남기기
         </button>
       </form>
+      {error && (
+        <p className="mt-2 text-xs text-rose-400" role="alert">
+          {error}
+        </p>
+      )}
       <ul className="mt-3 space-y-2">
         {comments.map((c) => (
           <li key={c.id} className="text-sm border-l-2 border-white/10 pl-3">
