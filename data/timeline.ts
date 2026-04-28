@@ -1,8 +1,8 @@
 import type { Setlist, Song, TimelineEvent } from '@/lib/types'
 
-// YouTube ID는 트게나시 토게아리 공식 채널/Universal Music 게시 영상 기준.
+// YouTube ID는 토게나시토게아리 공식 채널/Universal Music 게시 영상 기준.
 // 일부는 공식 MV가 미공개라 ONE-MAN LIVE 영상으로 대체 (주석 표시).
-// 「雑踏、僕らの街」가 곧 영문 타이틀 "Wrong World" (TVA OP) — 동일 곡.
+// 「雑踏、僕らの街」가 곧 영문 타이틀 "Wrong World"(TVA OP), 즉 동일 곡.
 export const songs: Song[] = [
   { id: 'na-mo-naki', title: '名もなき何もかも', youtubeId: 'dDwN4MgcIlU' },
   { id: 'itsuwari-no-kotowari', title: '偽りの理', youtubeId: 'LgoRQSPS-3Y' },
@@ -48,7 +48,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2023-05-29',
     type: 'new_song',
     title: '밴드명·멤버 발표 + 데뷔 MV 공개',
-    description: '「名もなき何もかも」「偽りの理」 MV 공개와 함께 트게나시 토게아리 본격 시동.',
+    description: '「名もなき何もかも」「偽りの理」 MV 공개와 함께 토게나시토게아리 본격 시동.',
     songId: 'na-mo-naki',
   },
   {
@@ -115,6 +115,7 @@ const rawEvents: TimelineEvent[] = [
     type: 'radio',
     title: '「トゲナシトゲアリのトゲラジ」 방송 시작',
     description: '카와사키 FM (~3/30 종료).',
+    youtubeId: 'hUL_T8Qrvqs',
   },
   {
     id: 'single-2024-02-28',
@@ -131,6 +132,7 @@ const rawEvents: TimelineEvent[] = [
     title: '1st ONE-MAN LIVE 「薄明の序奏」',
     description: '카나가와 1000 CLUB. 첫 단독 공연.',
     setlistId: 'sl-1st-oneman',
+    liveYoutubeId: 'snkGRhq2u1M',
   },
   {
     id: 'tva-2024-04',
@@ -146,6 +148,7 @@ const rawEvents: TimelineEvent[] = [
     type: 'radio',
     title: '「ガールズバンドクライ ～ラジオにも全部ぶちこめ。～」 시작',
     description: '온센(音泉) (~2025/3/27 종료).',
+    youtubeId: 'hUL_T8Qrvqs',
   },
   {
     id: 'radio-2024-04-12',
@@ -153,6 +156,7 @@ const rawEvents: TimelineEvent[] = [
     type: 'radio',
     title: '「トゲラジ+」 방송 시작',
     description: '카와사키 FM (~6/19 종료).',
+    youtubeId: 'hUL_T8Qrvqs',
   },
   {
     id: 'album-2024-04-24',
@@ -232,6 +236,7 @@ const rawEvents: TimelineEvent[] = [
     title: '2nd ONE-MAN LIVE 「凛音の理」',
     description: '카나가와 카와사키 CLUB CITTA\'.',
     setlistId: 'sl-2nd-oneman',
+    liveYoutubeId: 'P5B0E5ZjfnM',
   },
   {
     id: 'fes-2024-09-15-baycamp',
@@ -246,15 +251,16 @@ const rawEvents: TimelineEvent[] = [
     date: '2024-11-02',
     type: 'live',
     title: '3rd ONE-MAN LIVE 「咆哮の奏」',
-    description: '도쿄 TOKYO DOME CITY HALL — 인연의 땅에서 만석 공연.',
+    description: '도쿄 TOKYO DOME CITY HALL, 인연의 땅에서 만석 공연.',
     setlistId: 'sl-3rd-oneman',
+    liveYoutubeId: 'NqPiy6ca0i0',
   },
   {
     id: 'fes-2024-11-08-kr',
     date: '2024-11-08',
     type: 'fes',
     title: 'WONDERLIVET 2024',
-    description: '한국 고양 — 첫 해외 페스 출연.',
+    description: '한국 고양. 첫 해외 페스 출연.',
     setlistId: 'sl-tba',
   },
   {
@@ -262,7 +268,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2024-12-14',
     type: 'live',
     title: 'Live in SHANGHAI 「凛音の理」',
-    description: '상하이 — 첫 중국 공연 (12/14~15).',
+    description: '상하이. 첫 중국 공연(12/14~15).',
     setlistId: 'sl-2nd-oneman',
   },
   {
@@ -272,6 +278,7 @@ const rawEvents: TimelineEvent[] = [
     title: '4th ONE-MAN LIVE 「協奏の響」',
     description: '도쿄 도요스 PIT.',
     setlistId: 'sl-4th-oneman',
+    liveYoutubeId: '0qiqkY8fSvM',
   },
   {
     id: 'fes-2024-12-29-cdj',
@@ -288,7 +295,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2025-01-12',
     type: 'live',
     title: 'Avoid Note (vs MyGO!!!!!)',
-    description: '도쿄 TOKYO DOME CITY HALL — MyGO!!!!!와의 대반.',
+    description: '도쿄 TOKYO DOME CITY HALL. MyGO!!!!!와의 대반.',
     setlistId: 'sl-tba',
   },
   {
@@ -298,6 +305,7 @@ const rawEvents: TimelineEvent[] = [
     title: '5th ONE-MAN LIVE 「鳴動の刻」',
     description: '카나가와 파시피코 요코하마.',
     setlistId: 'sl-5th-oneman',
+    liveYoutubeId: 'qLLOWnk602c',
   },
   {
     id: 'bd-2025-03-19-1st',
@@ -326,7 +334,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2025-04-27',
     type: 'live',
     title: 'ガールズバンドクライ 2nd Anniversary LIVE',
-    description: '도쿄 — 다이아몬드 더스트와의 대반.',
+    description: '도쿄. 다이아몬드 더스트와의 대반.',
     setlistId: 'sl-tba',
   },
   {
@@ -348,7 +356,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2025-05-15',
     type: 'live',
     title: 'SOUL & CRY (vs She is Legend)',
-    description: '도쿄 가든 시어터 — She is Legend와의 대반.',
+    description: '도쿄 가든 시어터. She is Legend와의 대반.',
     setlistId: 'sl-tba',
   },
   {
@@ -372,7 +380,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2025-07-05',
     type: 'fes',
     title: 'J-POP SOUND CAPSULE @ AX 2025',
-    description: 'LA — 첫 미국 출연.',
+    description: 'LA. 첫 미국 출연.',
     setlistId: 'sl-tba',
   },
   {
@@ -409,7 +417,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2025-09-23',
     type: 'live',
     title: 'LIVE in 日本武道館 「奏檄の叫」',
-    description: '도쿄 — 첫 무도관 단독 공연.',
+    description: '도쿄. 첫 무도관 단독 공연.',
     setlistId: 'sl-budokan',
   },
   {
@@ -426,6 +434,7 @@ const rawEvents: TimelineEvent[] = [
     type: 'radio',
     title: '「トゲラジ ～川崎から世界へ～」 방송 시작',
     description: 'interfm897.',
+    youtubeId: 'hUL_T8Qrvqs',
   },
   {
     id: 'bd-2025-10-22-4th',
@@ -529,7 +538,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2026-04-18',
     type: 'live',
     title: 'Live in SEOUL 「凛音の理」',
-    description: '서울 (4/18~19) — 한국 투어.',
+    description: '서울(4/18~19). 한국 투어.',
     setlistId: 'sl-2nd-oneman',
   },
   {
@@ -537,7 +546,7 @@ const rawEvents: TimelineEvent[] = [
     date: '2026-05-01',
     type: 'live',
     title: 'TOUR 2026 FINAL 「拍動の未来 -ENCORE-」',
-    description: '도쿄 가든 시어터 — 투어 파이널.',
+    description: '도쿄 가든 시어터. 투어 파이널.',
     setlistId: 'sl-tba',
   },
 ]
