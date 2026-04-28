@@ -21,15 +21,72 @@ export const songs: Song[] = [
   { id: 'hakusai-display', title: '薄采ディスプレイ', youtubeId: '-etkkmuzZmM' },
 ]
 
-// Live 이벤트의 실제 셋리스트는 미확인. 라이브당 대표곡 1~2개만 placeholder로 묶어둠.
+// 실제 셋리스트는 미확인. sl-tba는 전체 곡 풀을 사용해 페스/라이브마다
+// event.id 시드로 다양한 곡을 뽑게 한다. 회차별 원맨 셋리스트는 그 시점까지
+// 발표된 곡 위주로 좀 더 넉넉히 채워 영상 다양성 확보.
+const ALL_SONG_IDS = [
+  'na-mo-naki',
+  'itsuwari-no-kotowari',
+  'kiutsu-hakudaku-su',
+  'hazete-saku',
+  'gokushiteki-answer',
+  'unmei-ni-kaketai',
+  'zattou-bokura',
+  'dare-ni-mo-narenai',
+  'shikai-no-sumi',
+  'kuhaku-catharsis',
+  'daremo',
+  'hakusai-display',
+]
+
 export const setlists: Setlist[] = [
-  { id: 'sl-tba', songIds: ['na-mo-naki', 'zattou-bokura'] },
-  { id: 'sl-1st-oneman', songIds: ['na-mo-naki', 'kiutsu-hakudaku-su', 'hazete-saku'] },
-  { id: 'sl-2nd-oneman', songIds: ['unmei-ni-kaketai', 'zattou-bokura', 'gokushiteki-answer'] },
-  { id: 'sl-3rd-oneman', songIds: ['kuhaku-catharsis', 'zattou-bokura', 'na-mo-naki'] },
-  { id: 'sl-4th-oneman', songIds: ['kuhaku-catharsis', 'daremo'] },
-  { id: 'sl-5th-oneman', songIds: ['daremo', 'hakusai-display'] },
-  { id: 'sl-budokan', songIds: ['hakusai-display', 'kuhaku-catharsis', 'zattou-bokura'] },
+  { id: 'sl-tba', songIds: ALL_SONG_IDS },
+  {
+    id: 'sl-1st-oneman',
+    songIds: ['na-mo-naki', 'itsuwari-no-kotowari', 'kiutsu-hakudaku-su', 'hazete-saku', 'gokushiteki-answer'],
+  },
+  {
+    id: 'sl-2nd-oneman',
+    songIds: [
+      'unmei-ni-kaketai',
+      'zattou-bokura',
+      'gokushiteki-answer',
+      'dare-ni-mo-narenai',
+      'shikai-no-sumi',
+      'hazete-saku',
+    ],
+  },
+  {
+    id: 'sl-3rd-oneman',
+    songIds: [
+      'kuhaku-catharsis',
+      'zattou-bokura',
+      'na-mo-naki',
+      'unmei-ni-kaketai',
+      'shikai-no-sumi',
+      'itsuwari-no-kotowari',
+    ],
+  },
+  {
+    id: 'sl-4th-oneman',
+    songIds: ['kuhaku-catharsis', 'daremo', 'dare-ni-mo-narenai', 'gokushiteki-answer', 'hazete-saku'],
+  },
+  {
+    id: 'sl-5th-oneman',
+    songIds: ['daremo', 'hakusai-display', 'kuhaku-catharsis', 'zattou-bokura', 'unmei-ni-kaketai'],
+  },
+  {
+    id: 'sl-budokan',
+    songIds: [
+      'hakusai-display',
+      'kuhaku-catharsis',
+      'zattou-bokura',
+      'daremo',
+      'na-mo-naki',
+      'unmei-ni-kaketai',
+      'gokushiteki-answer',
+    ],
+  },
 ]
 
 const rawEvents: TimelineEvent[] = [
