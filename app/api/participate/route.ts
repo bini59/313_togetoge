@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server'
-import { getServerClient } from '@/lib/supabase'
+import { getDB } from '@/lib/db'
+import { participate, participatedEventIds, participationCounts } from '@/lib/db/queries'
 import { getOrCreateClientId } from '@/lib/clientId'
 import { events } from '@/data/timeline'
 
 const validEventIds = new Set(events.map((e) => e.id))
-
-async function countFor(sb: ReturnType<typeof getServerClient>, eventId: string): Promise<number> {
-  const { count } = await sb
-    .from('participation_clients')
-    .select('*', { count: 'exact', head: true })
-    .eq('event_id', eventId)
-  return count ?? 0
-}
 
 export async function POST(req: Request) {
   const { eventId } = (await req.json().catch(() => ({}))) as { eventId?: string }
@@ -20,41 +13,25 @@ export async function POST(req: Request) {
   }
 
   const clientId = await getOrCreateClientId()
-  const sb = getServerClient()
-
-  const { error: insertErr } = await sb
-    .from('participation_clients')
-    .insert({ event_id: eventId, client_id: clientId })
-
-  if (insertErr) {
-    if (insertErr.code === '23505') {
-      const count = await countFor(sb, eventId)
-      return NextResponse.json({ count, alreadyParticipated: true })
-    }
-    return NextResponse.json({ error: insertErr.message }, { status: 500 })
+  try {
+    return NextResponse.json(await participate(await getDB(), eventId, clientId))
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
-
-  const count = await countFor(sb, eventId)
-  return NextResponse.json({ count, alreadyParticipated: false })
 }
 
 export async function GET() {
-  const sb = getServerClient()
   const clientId = await getOrCreateClientId()
-
-  const [countsRes, mineRes] = await Promise.all([
-    sb.from('participation_counts').select('event_id, count'),
-    sb.from('participation_clients').select('event_id').eq('client_id', clientId),
-  ])
-
-  if (countsRes.error) {
-    return NextResponse.json({ error: countsRes.error.message }, { status: 500 })
+  try {
+    const db = await getDB()
+    const [rows, participated] = await Promise.all([
+      participationCounts(db),
+      participatedEventIds(db, clientId),
+    ])
+    const counts: Record<string, number> = {}
+    for (const row of rows) counts[row.event_id] = row.count
+    return NextResponse.json({ counts, participated })
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
-
-  const counts: Record<string, number> = {}
-  for (const row of countsRes.data ?? []) counts[row.event_id] = row.count
-
-  const participated: string[] = (mineRes.data ?? []).map((r) => r.event_id)
-
-  return NextResponse.json({ counts, participated })
 }

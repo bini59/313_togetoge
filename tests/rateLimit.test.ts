@@ -1,49 +1,61 @@
-import { describe, expect, it, vi } from 'vitest'
+// @vitest-environment node
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import type { D1Database } from '@cloudflare/workers-types'
 import { checkCommentRate } from '@/lib/rateLimit'
+import { createTestD1, resetTables } from './helpers/d1'
 
-interface FakeQuery {
-  data: { created_at: string }[] | null
-  error: { message: string } | null
+let db: D1Database
+let dispose: () => Promise<void>
+
+beforeAll(async () => {
+  ;({ db, dispose } = await createTestD1())
+}, 30_000)
+afterAll(() => dispose())
+beforeEach(() => resetTables(db))
+
+const NOW = Date.parse('2026-10-21T12:00:00.000Z')
+
+async function commentAt(clientId: string, msAgo: number) {
+  await db
+    .prepare(`INSERT INTO comments (id, event_id, content, client_id, created_at) VALUES (?1, 'e', 'x', ?2, ?3)`)
+    .bind(crypto.randomUUID(), clientId, new Date(NOW - msAgo).toISOString())
+    .run()
 }
 
-function fakeClient(rows: { created_at: string }[] | null, error: FakeQuery['error'] = null) {
-  const limit = vi.fn().mockResolvedValue({ data: rows, error })
-  const order = vi.fn().mockReturnValue({ limit })
-  const gte = vi.fn().mockReturnValue({ order })
-  const eq = vi.fn().mockReturnValue({ gte })
-  const select = vi.fn().mockReturnValue({ eq })
-  const from = vi.fn().mockReturnValue({ select })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { from } as any
-}
-
-describe('checkCommentRate', () => {
+describe('checkCommentRate (D1)', () => {
   it('allows when no recent comments', async () => {
-    const sb = fakeClient([])
-    const d = await checkCommentRate(sb, 'client-1')
-    expect(d.ok).toBe(true)
+    expect(await checkCommentRate(db, 'client-1', undefined, NOW)).toEqual({ ok: true })
   })
 
   it('blocks within cooldown window', async () => {
-    const sb = fakeClient([{ created_at: new Date(Date.now() - 1000).toISOString() }])
-    const d = await checkCommentRate(sb, 'client-1', { minIntervalMs: 10_000, perHourMax: 20 })
-    expect(d.ok).toBe(false)
-    expect(d.reason).toBe('cooldown')
-    expect(d.retryAfterMs).toBeGreaterThan(0)
+    await commentAt('client-1', 1_000)
+    const d = await checkCommentRate(db, 'client-1', { minIntervalMs: 10_000, perHourMax: 20 }, NOW)
+    expect(d).toEqual({ ok: false, reason: 'cooldown', retryAfterMs: 9_000 })
+  })
+
+  it('only counts the same client', async () => {
+    await commentAt('client-2', 1_000)
+    expect((await checkCommentRate(db, 'client-1', undefined, NOW)).ok).toBe(true)
   })
 
   it('blocks at hourly cap', async () => {
-    const past = new Date(Date.now() - 60_000).toISOString()
-    const rows = Array.from({ length: 20 }, () => ({ created_at: past }))
-    const sb = fakeClient(rows, null)
-    const d = await checkCommentRate(sb, 'client-1', { minIntervalMs: 1, perHourMax: 20 })
+    for (let i = 0; i < 20; i++) await commentAt('client-1', 60_000 + i)
+    const d = await checkCommentRate(db, 'client-1', { minIntervalMs: 1, perHourMax: 20 }, NOW)
     expect(d.ok).toBe(false)
     expect(d.reason).toBe('hourly_cap')
   })
 
+  it('ignores comments older than one hour (ISO string comparison)', async () => {
+    for (let i = 0; i < 20; i++) await commentAt('client-1', 60 * 60 * 1000 + 1 + i)
+    expect((await checkCommentRate(db, 'client-1', { minIntervalMs: 1, perHourMax: 20 }, NOW)).ok).toBe(true)
+  })
+
   it('fails open on infra error', async () => {
-    const sb = fakeClient(null, { message: 'boom' })
-    const d = await checkCommentRate(sb, 'client-1')
-    expect(d.ok).toBe(true)
+    const broken = {
+      prepare: () => {
+        throw new Error('boom')
+      },
+    } as unknown as D1Database
+    expect(await checkCommentRate(broken, 'client-1')).toEqual({ ok: true })
   })
 })

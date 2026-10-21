@@ -17,3 +17,8 @@ coverage
 playwright-report
 test-results
 .playwright
+
+# Cloudflare / OpenNext
+.wrangler
+.open-next
+.dev.vars*

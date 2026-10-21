@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.describe('GBC Timeline — overview', () => {
   test.beforeEach(async ({ page }) => {
-    // Stub API routes — they need Supabase, which isn't running in E2E.
+    // Stub API routes so E2E does not depend on local D1 data.
     await page.route('**/api/participate*', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({ json: { counts: {}, participated: [] } })

@@ -18,7 +18,7 @@
 - Next.js 16 (App Router) + React 19
 - pnpm
 - Tailwind CSS v4
-- Supabase (Postgres) — 참여 카운트 + 댓글
+- Cloudflare Workers (`@opennextjs/cloudflare`) + D1 (SQLite) — 참여 카운트 + 댓글
 - Zustand — 재생 상태
 - YouTube IFrame API
 - Vitest + Testing Library — 단위/컴포넌트 테스트
@@ -33,8 +33,9 @@ app/                 Next.js App Router (layout, page, api/)
     comments/        GET/POST: 익명 댓글
 components/          UI 컴포넌트 (Timeline, EventCard, Player, Comments)
 data/                정적 타임라인 데이터 (events, songs, setlists)
-lib/                 supabase client, types, store, utils
-supabase/            SQL 마이그레이션
+lib/                 db (D1 쿼리), types, store, utils
+migrations/          D1 마이그레이션 (SQLite)
+scripts/             export-postgres-to-d1.sh (구 Postgres → D1 데이터 이전)
 tests/               vitest 테스트
 .claude/             프로젝트 전용 agents/skills/CLAUDE.md
 ```
@@ -46,63 +47,36 @@ tests/               vitest 테스트
 - `songs`: 곡 메타 (id, title, youtubeId)
 - `setlists`: live/fes 셋리스트 (eventId → songIds[])
 
-**동적 (Supabase)**
-- `participations`: `event_id` (PK), `count` (int)
+**동적 (D1)**
 - `participation_clients`: `event_id` + `client_id` (UUID 쿠키, UNIQUE) — 중복 방지
-- `comments`: `id`, `event_id`, `content`, `created_at`
+- `comments`: `id`, `event_id`, `content`, `client_id`(rate limit용), `created_at`
+- `participation_counts` (view): 이벤트별 참여 수
 
 ## 환경 변수
 
-`.env.local` 생성 (호스티드 Supabase 사용 시):
-
-```
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...   # API 라우트에서만 사용
-```
-
-로컬 docker-compose를 쓰면 `.env.docker.example`을 `.env`로 복사해 그대로 사용.
+필요 없음. D1은 `wrangler.jsonc`의 `DB` 바인딩으로 연결됩니다.
 
 ## 실행
 
 ```bash
 pnpm install
+pnpm db:migrate:local   # 로컬 D1 스키마 (최초 1회)
 pnpm dev          # http://localhost:3000
 pnpm build
 pnpm test         # vitest (단위/컴포넌트)
 pnpm test:e2e     # Playwright E2E (자동으로 dev 서버 기동)
 pnpm lint
 pnpm typecheck    # tsc --noEmit
+pnpm preview      # OpenNext 빌드 + wrangler dev (Workers 런타임)
 ```
 
-Supabase 스키마는 `supabase/schema.sql`을 Supabase 대시보드 SQL Editor에 붙여넣어 적용.
+## 배포 (Cloudflare Workers)
 
-## Local stack via Docker
+`.github/workflows/deploy.yml`을 Actions 탭에서 수동 실행하면 D1 마이그레이션 적용 → OpenNext 빌드 → `wrangler deploy` 순으로 배포합니다. main merge만으로는 배포되지 않습니다.
 
-전체 스택(Postgres + PostgREST + Caddy gateway + Next.js)을 docker-compose로 한 번에 띄울 수 있습니다.
-
-```bash
-cp .env.docker.example .env       # 로컬 dev용 시크릿/JWT
-docker compose up -d --build      # 전체 스택 기동
-# → 앱:    http://localhost:3200
-# → REST: http://localhost:8000/rest/v1/...
-docker compose down               # 정리 (볼륨 유지)
-docker compose down -v            # DB 데이터까지 초기화
-```
-
-구성:
-- `db` (postgres:17-alpine) — `docker/db/init/`의 SQL을 순서대로 실행하여 롤
-  (`anon`/`authenticated`/`authenticator`/`service_role`)과 스키마를 부팅 시 1회 적용.
-- `postgrest` — `authenticator`로 접속, JWT 클레임의 `role`을 따라 권한 전환.
-- `gateway` (caddy:2-alpine) — `/rest/v1/*`만 PostgREST로 프록시.
-- `app` — `Dockerfile`(multi-stage, Next.js standalone) 기반.
-
-JWT 재발급:
-```bash
-SUPABASE_JWT_SECRET="..." node scripts/gen-jwt.mjs
-```
-
-> docker-compose 환경에서는 schema.sql이 init 디렉토리에서만 적용됩니다. 컨테이너 운영 중 스키마 변경은 `psql` 또는 `supabase/schema.sql`을 호스팅 환경에 적용하는 식으로 별도 처리하세요.
+최초 1회 준비:
+1. `pnpm exec wrangler d1 create togetoge` → 출력된 id를 `wrangler.jsonc`의 `database_id`에 넣고 커밋.
+2. GitHub 시크릿 `CLOUDFLARE_API_TOKEN`(Workers Scripts:Edit, D1:Edit), `CLOUDFLARE_ACCOUNT_ID` 등록.
 
 ## Pre-commit Hook
 
@@ -115,7 +89,7 @@ SUPABASE_JWT_SECRET="..." node scripts/gen-jwt.mjs
 
 ## 데이터 추가/수정
 
-이벤트는 `data/timeline.ts`에서 직접 편집. Supabase 건드릴 필요 없음.
+이벤트는 `data/timeline.ts`에서 직접 편집. D1 건드릴 필요 없음.
 
 ```ts
 {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getServerClient } from '@/lib/supabase'
+import { getDB } from '@/lib/db'
+import { insertComment, listCommentsForEvent } from '@/lib/db/queries'
 import { getOrCreateClientId } from '@/lib/clientId'
 import { checkCommentRate } from '@/lib/rateLimit'
 import { events } from '@/data/timeline'
@@ -12,15 +13,12 @@ export async function GET(req: Request) {
   if (!eventId || !validEventIds.has(eventId)) {
     return NextResponse.json({ error: 'invalid event' }, { status: 400 })
   }
-  const sb = getServerClient()
-  const { data, error } = await sb
-    .from('comments')
-    .select('id, event_id, content, created_at')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: false })
-    .limit(100)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ comments: data ?? [] })
+  try {
+    const comments = await listCommentsForEvent(await getDB(), eventId, 100)
+    return NextResponse.json({ comments })
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
@@ -31,15 +29,15 @@ export async function POST(req: Request) {
   if (!eventId || !validEventIds.has(eventId)) {
     return NextResponse.json({ error: 'invalid event' }, { status: 400 })
   }
-  const trimmed = (content ?? '').trim()
+  const trimmed = (typeof content === 'string' ? content : '').trim()
   if (trimmed.length < 1 || trimmed.length > 500) {
     return NextResponse.json({ error: 'content length 1..500' }, { status: 400 })
   }
 
   const clientId = await getOrCreateClientId()
-  const sb = getServerClient()
+  const db = await getDB()
 
-  const decision = await checkCommentRate(sb, clientId)
+  const decision = await checkCommentRate(db, clientId)
   if (!decision.ok) {
     return NextResponse.json(
       {
@@ -55,11 +53,10 @@ export async function POST(req: Request) {
     )
   }
 
-  const { data, error } = await sb
-    .from('comments')
-    .insert({ event_id: eventId, content: trimmed, client_id: clientId })
-    .select('id, event_id, content, created_at')
-    .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ comment: data })
+  try {
+    const comment = await insertComment(db, { eventId, content: trimmed, clientId })
+    return NextResponse.json({ comment })
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
+  }
 }

@@ -19,10 +19,5 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     timeout: 120_000,
     reuseExistingServer: false,
-    env: {
-      NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'e2e-anon',
-      SUPABASE_SERVICE_ROLE_KEY: 'e2e-service',
-    },
   },
 })
