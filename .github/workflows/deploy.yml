@@ -1,37 +1,43 @@
-# Production is the togetoge namespace on the Oracle k3s, deployed by Flux from bini59/homelab (apps/togetoge).
-# This workflow only pushes ghcr.io/bini59/313_togetoge:sha-<commit>-<unix time>; Flux rolls out the newest tag.
-name: Build togetoge image
+name: Deploy (Cloudflare Workers)
 
+# Manual only. Merging to main does not deploy; run this from the Actions tab
+# after the D1 database exists and wrangler.jsonc has the real database_id.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
-
 concurrency:
-  group: togetoge-production
+  group: deploy-production
   cancel-in-progress: false
 
 jobs:
-  image:
-    runs-on: ubuntu-24.04-arm
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
-      - id: tag
-        run: echo "tag=ghcr.io/bini59/313_togetoge:sha-$GITHUB_SHA-$(date +%s)" >> "$GITHUB_OUTPUT"
-      - uses: docker/login-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.tag.outputs.tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Refuse placeholder database_id
+        run: |
+          if grep -q '00000000-0000-0000-0000-000000000000' wrangler.jsonc; then
+            echo "wrangler.jsonc still has the placeholder D1 database_id" >&2
+            exit 1
+          fi
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - name: Apply D1 migrations
+        run: pnpm exec wrangler d1 migrations apply DB --remote
+
+      - name: Build and deploy
+        run: pnpm run deploy

@@ -1,38 +1,22 @@
 import { NextResponse } from 'next/server'
-import { getServerClient } from '@/lib/supabase'
+import { getDB } from '@/lib/db'
+import { listRecentComments, participationCounts } from '@/lib/db/queries'
 import { events } from '@/data/timeline'
 
 const validEventIds = new Set(events.map((e) => e.id))
 
 export async function GET() {
-  const sb = getServerClient()
-
-  const [commentsRes, participationsRes] = await Promise.all([
-    sb
-      .from('comments')
-      .select('id, event_id, content, created_at')
-      .order('created_at', { ascending: false })
-      .limit(20),
-    sb
-      .from('participation_counts')
-      .select('event_id, count')
-      .order('count', { ascending: false })
-      .limit(10),
-  ])
-
-  if (commentsRes.error) {
-    return NextResponse.json({ error: commentsRes.error.message }, { status: 500 })
+  try {
+    const db = await getDB()
+    const [comments, counts] = await Promise.all([
+      listRecentComments(db, 20),
+      participationCounts(db, 10),
+    ])
+    return NextResponse.json({
+      recentComments: comments.filter((c) => validEventIds.has(c.event_id)),
+      topParticipated: counts.filter((p) => validEventIds.has(p.event_id)),
+    })
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
-  if (participationsRes.error) {
-    return NextResponse.json({ error: participationsRes.error.message }, { status: 500 })
-  }
-
-  const recentComments = (commentsRes.data ?? []).filter((c) =>
-    validEventIds.has(c.event_id),
-  )
-  const topParticipated = (participationsRes.data ?? []).filter((p) =>
-    validEventIds.has(p.event_id),
-  )
-
-  return NextResponse.json({ recentComments, topParticipated })
 }
