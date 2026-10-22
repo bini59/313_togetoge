@@ -74,6 +74,8 @@ pnpm preview      # OpenNext 빌드 + wrangler dev (Workers 런타임)
 
 `.github/workflows/deploy.yml`을 Actions 탭에서 수동 실행하면 D1 마이그레이션 적용 → OpenNext 빌드 → `wrangler deploy` 순으로 배포합니다. main merge만으로는 배포되지 않습니다.
 
+기존 GHCR → Flux/k3s 이미지 발행은 `build-legacy-image.yml`에 수동 실행 전용으로 보존했습니다. `source_ref`는 Dockerfile이 남아 있는 전환 전 커밋(기본값 `b8c1154`)을 지정합니다. 현재 브랜치에는 Dockerfile이 없습니다. 이 워크플로를 실행하면 Flux가 해당 이미지를 운영에 반영할 수 있으므로, 기존 k3s로 롤백할 때만 사람이 실행합니다.
+
 최초 1회 준비:
 1. `pnpm exec wrangler d1 create togetoge` → 출력된 id를 `wrangler.jsonc`의 `database_id`에 넣고 커밋.
 2. GitHub 시크릿 `CLOUDFLARE_API_TOKEN`(Workers Scripts:Edit, D1:Edit), `CLOUDFLARE_ACCOUNT_ID` 등록.
