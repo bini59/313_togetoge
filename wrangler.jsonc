@@ -8,6 +8,9 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "routes": [
+    { "pattern": "togetoge.bini59.dev", "custom_domain": true }
+  ],
   "services": [
     {
       // Lets OpenNext call back into this worker (cache revalidation).
@@ -19,9 +22,7 @@
     {
       "binding": "DB",
       "database_name": "togetoge",
-      // Placeholder. Replace with the id printed by `wrangler d1 create togetoge`
-      // (see the cutover runbook in the PR / README) before the first deploy.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "832e69b6-14e5-48bd-b0aa-997d6eae1b86",
       "migrations_dir": "migrations"
     }
   ],
